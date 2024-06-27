@@ -3,80 +3,97 @@ package remarkablepage
 import (
 	"fmt"
 	"image"
-	"image/color"
 
 	"os"
 
 	ed "github.com/ernyoke/imger/edgedetection"
-	ef "github.com/ernyoke/imger/effects"
 	im "github.com/ernyoke/imger/imgio"
 	"github.com/ernyoke/imger/padding"
+	rz "github.com/ernyoke/imger/resize"
+	"github.com/ernyoke/imger/utils"
 )
 
-// DetectWhitePixels detecta los píxeles blancos en una imagen y los exporta a un archivo reMarkable
-func DetectWhitePixels(img *image.Gray) *image.Gray {
+const (
+	debug = false
+)
+
+func DetectWhitePixels(img *image.Gray) {
 	file, err := os.Create("testPNGConversion.rm")
 	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return nil
+		debugPrint("Error creating file:", err)
+		return
 	}
 	defer file.Close()
 
-	page := NewReMarkablePage(file, float32(Y_MAX)) // Asumiendo una altura de página de 1872 unidades
+	page := NewReMarkablePage(file, float32(Y_MAX))
 
-	// Obtener dimensiones de la imagen
-	bounds := img.Bounds()
-	width, height := bounds.Dx(), bounds.Dy()
+	size := img.Bounds().Max
+	utils.ParallelForEachPixel(size,
 
-	// Crear una imagen en escala de grises para almacenar los píxeles negros
-	grayImg := image.NewGray(image.Rect(0, 0, width, height))
-	grayImg = ef.InvertGray(grayImg)
-	// Iterar sobre cada píxel de la imagen original
-	for y := 0; y < height; y = y + 1 {
-
-		for x := 0; x < width; x = x + 1 {
-			// Obtener color del píxel
+		func(x, y int) {
+			// Get pixel color
 			originalColor := img.At(x, y)
 
-			// Convertir a escala de grises
+			// Convert to grayscale
 			r, _, _, _ := originalColor.RGBA()
 			grayValue := uint8(r >> 8)
 
-			// Si es un píxel blanco, asignar el valor a la imagen de salida y agregar un punto a la página reMarkable
+			// If the pixel is not black, assign the value to the output image and add a point to the reMarkable page
 			if grayValue > 0 {
-				grayImg.SetGray(x, y, color.Gray{0})
-				line := page.AddLine()
-				var c float32 = 0.3
-				line.AddPoint(float32(x)-c, float32(y)-c)
-				line.AddPoint(float32(x), float32(y))
-				line.AddPoint(float32(x)+c, float32(y)+c)
-
+				page.AddPixel(float32(x), float32(y))
 			}
-		}
-	}
+
+		},
+	)
 
 	err = page.Export()
 	if err != nil {
-		fmt.Println("Error exporting page:", err)
-		return nil
+		debugPrint("Error exporting page:", err)
 	}
 
-	fmt.Println("File testPNGConversion.rm generated successfully.")
-	return grayImg
+	debugPrint("File testPNGConversion.rm generated successfully.")
 }
 
 func TestCannyEdgeDetection(imagePath string) {
 
-	img, err := im.ImreadGray(imagePath)
+	// Check the file size
+	fileInfo, err := os.Stat(imagePath)
 	if err != nil {
-		fmt.Println("Error openning file:", err)
+		debugPrint("Error getting file information:", err)
 		return
 	}
 
-	laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
+	// If the file size is greater than 200 KB, perform resizing
+	if fileInfo.Size() > 50*1024 {
+		debugPrint("The file size is greater than 200 KB, resizing will be performed.")
+		img, err := im.ImreadGray(imagePath)
+		if err != nil {
+			debugPrint("Error opening the file:", err)
+			return
+		}
 
-	im.Imwrite(laplacianGray, "PostLaplacianResult.png") //BEST RESULT
+		img, _ = rz.ResizeGray(img, 0.7, 0.7, rz.InterLinear)
+		laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
 
-	cleanerImg := DetectWhitePixels(laplacianGray)
-	im.Imwrite(cleanerImg, "PostCleaning.png")
+		DetectWhitePixels(laplacianGray)
+
+	} else {
+		debugPrint("The file size is less than 200 KB, resizing will not be performed.")
+		img, err := im.ImreadGray(imagePath)
+		if err != nil {
+			debugPrint("Error opening the file:", err)
+			return
+		}
+
+		laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
+
+		DetectWhitePixels(laplacianGray)
+
+	}
+}
+
+func debugPrint(info string, opt ...error) {
+	if debug {
+		fmt.Println(info, opt)
+	}
 }

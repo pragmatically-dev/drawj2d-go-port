@@ -6,57 +6,10 @@ import (
 	"image/color"
 	"math"
 	"os"
+	"sync"
 )
 
-// -------------------------------
 // Constants
-
-// see https://github.com/bsdz/remarkable-layers/blob/master/rmlines/constants.py
-/*     static String HEADER_V5 = "reMarkable .lines file, version=5          ";
-static final float X_MAX = 1404f;
-static final float Y_MAX = 1872f;
-
-static final class rmColour {
-    static final int BLACK = 0;
-    static final int GREY = 1;
-    static final int WHITE = 2;
-    // see https://github.com/ricklupton/rmscene/blob/main/src/rmscene/scene_items.py
-    static final int BLUE = 6;
-    static final int RED = 7;
-}
-
-static final class rmPen {
-    // see https://github.com/ax3l/lines-are-beautiful/blob/develop/include/rmlab/Line.hpp
-    static final int BRUSH = 0;
-    static final int PENCIL_TILT = 1;
-    static final int BALLPOINT_PEN_1 = 2;
-    static final int MARKER_1 = 3;
-    static final int FINELINER_1 = 4;
-    static final int HIGHLIGHTER = 5;
-    static final int RUBBER = 6;  // used in version 5
-    static final int PENCIL_SHARP = 7;
-    static final int RUBBER_AREA = 8;
-    static final int ERASE_ALL = 9;
-    static final int SELECTION_BRUSH_1 = 10;
-    static final int SELECTION_BRUSH_2 = 11;
-    // below used for version 5;
-    static final int PAINT_BRUSH_1 = 12;
-    static final int MECHANICAL_PENCIL_1 = 13;
-    static final int PENCIL_2 = 14;
-    static final int BALLPOINT_PEN_2 = 15;
-    static final int MARKER_2 = 16;
-    static final int FINELINER_2 = 17;
-    static final int HIGHLIGHTER_2 = 18;
-    static final int DEFAULT = FINELINER_2;
-}
-
-static final class rmWidth {
-    static final float SMALL = 1.875f;
-    static final float MEDIUM = 2.0f;
-    static final float LARGE = 2.125f;
-} */
-
-// Constantes
 const (
 	VERSION   = "0.3"
 	REV_DATE  = "2023-04-08"
@@ -65,18 +18,17 @@ const (
 	HEADER_V5 = "reMarkable .lines file, version=5          "
 )
 
-// ReMarkablePage representa una página para la tableta reMarkable
-
+// ReMarkablePage represents a page for the reMarkable tablet
 type ReMarkablePage struct {
 	lines      []*rmLine
 	debug      bool
 	out        *os.File
 	colors     map[string]color.RGBA
 	pageHeight float32
+	mu         sync.Mutex // Add a mutex for thread safety
 }
 
-// rmLine representa una línea en la página reMarkable
-
+// rmLine represents a line on the reMarkable page
 type rmLine struct {
 	brushType            int32
 	color                int32
@@ -86,8 +38,7 @@ type rmLine struct {
 	pointList            []*rmPoint
 }
 
-// rmPoint representa un punto en una línea reMarkable
-
+// rmPoint represents a point on a reMarkable line
 type rmPoint struct {
 	x, y      float32
 	speed     float32
@@ -96,10 +47,9 @@ type rmPoint struct {
 	pressure  float32
 }
 
-// NewReMarkablePage crea una nueva página reMarkable
-
+// NewReMarkablePage creates a new reMarkable page
 func NewReMarkablePage(out *os.File, pageHeight float32) *ReMarkablePage {
-	page := &ReMarkablePage{
+	return &ReMarkablePage{
 		lines: make([]*rmLine, 0),
 		debug: false,
 		out:   out,
@@ -110,12 +60,13 @@ func NewReMarkablePage(out *os.File, pageHeight float32) *ReMarkablePage {
 		},
 		pageHeight: pageHeight,
 	}
-	return page
 }
 
-// AddLine agrega una nueva línea a la página
-
+// AddLine adds a new line to the page
 func (page *ReMarkablePage) AddLine() *rmLine {
+	page.mu.Lock() // Lock the mutex before accessing shared resources
+	defer page.mu.Unlock()
+
 	line := &rmLine{
 		pointList: make([]*rmPoint, 0),
 	}
@@ -126,37 +77,39 @@ func (page *ReMarkablePage) AddLine() *rmLine {
 	return line
 }
 
-// AddPoint agrega un punto a una línea
-
+// AddPoint adds a point to a line
 func (line *rmLine) AddPoint(x, y float32) *rmPoint {
 	point := &rmPoint{
-		x: x,
-		y: y,
+		x:         x,
+		y:         y,
+		speed:     0.1,
+		direction: 0,
+		width:     2.125,
+		pressure:  1.0,
 	}
 	line.pointList = append(line.pointList, point)
 	return point
 }
 
-// Export escribe el contenido de la página al archivo de salida
-
+// Export writes the content of the page to the output file
 func (page *ReMarkablePage) Export() error {
 	defer page.out.Close()
 
-	// Escribir el encabezado
+	// Write the header
 	header := []byte(HEADER_V5)
 	_, err := page.out.Write(header)
 	if err != nil {
 		return err
 	}
 
-	// Escribir la página
+	// Write the page
 	nbLayers := int32(1)
 	err = binary.Write(page.out, binary.LittleEndian, nbLayers)
 	if err != nil {
 		return err
 	}
 
-	// Escribir las capas
+	// Write the layers
 	err = page.writeLayer()
 	if err != nil {
 		return err
@@ -165,9 +118,11 @@ func (page *ReMarkablePage) Export() error {
 	return nil
 }
 
-// writeLayer escribe una capa de líneas en el archivo de salida
-
+// writeLayer writes a layer of lines to the output file
 func (page *ReMarkablePage) writeLayer() error {
+	page.mu.Lock() // Lock the mutex before accessing shared resources
+	defer page.mu.Unlock()
+
 	err := binary.Write(page.out, binary.LittleEndian, int32(len(page.lines)))
 	if err != nil {
 		return err
@@ -182,8 +137,7 @@ func (page *ReMarkablePage) writeLayer() error {
 	return nil
 }
 
-// writeLine escribe una línea y sus puntos en el archivo de salida
-
+// writeLine writes a line and its points to the output file
 func (page *ReMarkablePage) writeLine(line *rmLine) error {
 	err := binary.Write(page.out, binary.LittleEndian, line.brushType)
 	if err != nil {
@@ -225,8 +179,7 @@ func (page *ReMarkablePage) writeLine(line *rmLine) error {
 	return nil
 }
 
-// writePoint escribe un punto en el archivo de salida
-
+// writePoint writes a point to the output file
 func (page *ReMarkablePage) writePoint(point *rmPoint) error {
 	err := binary.Write(page.out, binary.LittleEndian, point.x)
 	if err != nil {
@@ -255,14 +208,12 @@ func (page *ReMarkablePage) writePoint(point *rmPoint) error {
 	return nil
 }
 
-// transformPoint transforma un punto al nuevo sistema de coordenadas
-
+// transformPoint transforms a point to the new coordinate system
 func (page *ReMarkablePage) transformPoint(x, y float32) (float32, float32) {
 	return x, page.pageHeight - y
 }
 
-// DrawCircle dibuja un círculo en la página
-
+// DrawCircle draws a circle on the page
 func (page *ReMarkablePage) DrawCircle(centerX, centerY, radius float32) {
 	line := page.AddLine()
 	numSegments := 360
@@ -275,8 +226,7 @@ func (page *ReMarkablePage) DrawCircle(centerX, centerY, radius float32) {
 	}
 }
 
-// DrawBezierCurve dibuja una curva de Bézier en la página
-
+// DrawBezierCurve draws a Bezier curve on the page
 func (page *ReMarkablePage) DrawBezierCurve(p0, p1, p2, p3 rmPoint) {
 	line := page.AddLine()
 	numSegments := 100
@@ -289,7 +239,17 @@ func (page *ReMarkablePage) DrawBezierCurve(p0, p1, p2, p3 rmPoint) {
 	}
 }
 
-// DrawFilledRectangle dibuja un rectángulo relleno en la página
+// AddPixel adds a pixel to the page
+func (page *ReMarkablePage) AddPixel(x, y float32) {
+	line := page.AddLine()
+	const c = 0.1
+
+	line.AddPoint(x-c, y-c)
+	line.AddPoint(x, y)
+	line.AddPoint(x+c, y+c)
+}
+
+// DrawFilledRectangle draws a filled rectangle on the page
 func (page *ReMarkablePage) DrawFilledRectangle(x1, y1, x2, y2 float32) {
 	line := page.AddLine()
 
@@ -316,69 +276,4 @@ func (page *ReMarkablePage) DrawFilledRectangle(x1, y1, x2, y2 float32) {
 		//tx, ty := page.transformPoint(x1, y)
 		line.AddPoint(x1, y)
 	}
-}
-
-// Test genera un archivo .rm de prueba con una carita feliz
-
-func Test() {
-	file, err := os.Create("testRemarkablePageSmiley.rm")
-	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
-	}
-	defer file.Close()
-
-	page := NewReMarkablePage(file, 1872) // Asumiendo una altura de página de 1000 unidades
-
-	center := &rmPoint{X_MAX / 2, Y_MAX / 2, 0, 0, 0, 0}
-	// Dibujar la cara
-	page.DrawCircle(center.x, center.y, 400)
-
-	// Dibujar los ojos
-	page.DrawCircle(center.x*1.2, center.y*1.25, 70)
-	page.DrawCircle(center.x*.85, center.y*1.25, 70)
-
-	for i := 0; i < 6; i++ {
-
-		page.DrawCircle(center.x*1.2, center.y*1.25, float32(i*10))
-		page.DrawCircle(center.x*.85, center.y*1.25, float32(i*10))
-
-	}
-
-	for i := 0; i < 6; i++ {
-		var x float32 = 800
-		var y float32 = 800
-
-		var squareSize float32 = 5.0
-		page.DrawFilledRectangle(x, y, (x+squareSize)*float32(i), (y+squareSize)*float32(i))
-	}
-
-	p0 := rmPoint{center.x * .65, center.x * 1.25, 0, 0, 0, 0}
-	p1 := rmPoint{center.x * 1, center.x * 1, 0, 0, 0, 0}
-	p2 := rmPoint{center.x * 1, center.x * 1, 0, 0, 0, 0}
-	p3 := rmPoint{center.x * 1.37, center.x * 1.25, 0, 0, 0, 0}
-
-	line := page.AddLine()
-	line.AddPoint(center.x*.65, center.x*1.25)
-	line.AddPoint(center.x*1.37, center.x*1.25)
-
-	page.DrawBezierCurve(p0, p1, p2, p3)
-
-	// Tamaño y padding de los cuadrados
-	squareSize := float32(200)
-	padding := float32(50) // Espacio entre cuadrados
-
-	// Generar 10 cuadrados con padding entre ellos
-	for i := 0; i < 4; i++ {
-		x := float32(100 + i*(int(squareSize)+int(padding)))
-		y := float32(100)
-		page.DrawFilledRectangle(x, y, x+squareSize, y+squareSize)
-	}
-	err = page.Export()
-	if err != nil {
-		fmt.Println("Error exporting page:", err)
-		return
-	}
-
-	fmt.Println("File testRemarkablePageSmiley.rm generated successfully.")
 }
