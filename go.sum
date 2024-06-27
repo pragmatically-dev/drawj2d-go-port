@@ -2,3 +2,5 @@ github.com/ernyoke/imger v1.0.0 h1:v+vnOpZwCfet5AUruwhN54g9v8CnhKOB3ZCsMIa5AZ0=
 github.com/ernyoke/imger v1.0.0/go.mod h1:Ft4UQ3taMpn8EVVLWRlT0ijOvMTKZZqhXXR4VzCsAT4=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+go.uber.org/automaxprocs v1.5.3 h1:kWazyxZUrS3Gs4qUpbwo5kEIMGe/DAvi5Z4tl2NW4j8=
+go.uber.org/automaxprocs v1.5.3/go.mod h1:eRbA25aqJrxAbsLO0xy5jVwPt7FQnRgjW+efnwa1WM0=
