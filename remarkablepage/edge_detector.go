@@ -17,7 +17,7 @@ const (
 	debug = false
 )
 
-func DetectWhitePixels(img *image.Gray) {
+func DetectWhitePixels(img *image.Gray, filename string) {
 	file, err := os.Create("testPNGConversion.rm")
 	if err != nil {
 		debugPrint("Error creating file:", err)
@@ -75,7 +75,7 @@ func TestCannyEdgeDetection(imagePath string) {
 		img, _ = rz.ResizeGray(img, 0.7, 0.7, rz.InterLinear)
 		laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
 
-		DetectWhitePixels(laplacianGray)
+		DetectWhitePixels(laplacianGray, imagePath)
 
 	} else {
 		debugPrint("The file size is less than 200 KB, resizing will not be performed.")
@@ -87,7 +87,7 @@ func TestCannyEdgeDetection(imagePath string) {
 
 		laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
 
-		DetectWhitePixels(laplacianGray)
+		DetectWhitePixels(laplacianGray, imagePath)
 
 	}
 }

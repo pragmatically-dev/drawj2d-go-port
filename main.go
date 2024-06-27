@@ -8,6 +8,7 @@ import (
 func main() {
 
 	t.TestCannyEdgeDetection("test-2.png")
+	//Usage ./drawjwd-rm filename.rm
 	t.TestRmDoc()
 
 }
