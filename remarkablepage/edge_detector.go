@@ -3,6 +3,8 @@ package remarkablepage
 import (
 	"fmt"
 	"image"
+	"path/filepath"
+	"strings"
 
 	"os"
 
@@ -17,8 +19,19 @@ const (
 	debug = false
 )
 
+func GetFileNameWithoutExtension(filePath string) string {
+	// Get the base name of the file
+	base := filepath.Base(filePath)
+	// Get the extension
+	ext := filepath.Ext(base)
+	// Remove the extension from the base name
+	return strings.TrimSuffix(base, ext)
+}
+
 func DetectWhitePixels(img *image.Gray, filename string) {
-	file, err := os.Create("testPNGConversion.rm")
+	rmFile := GetFileNameWithoutExtension(filename)
+
+	file, err := os.Create(fmt.Sprintf("%s.rm", rmFile))
 	if err != nil {
 		debugPrint("Error creating file:", err)
 		return
