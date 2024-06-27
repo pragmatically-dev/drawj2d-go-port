@@ -270,8 +270,8 @@ func (page *ReMarkablePage) DrawCircle(centerX, centerY, radius float32) {
 		theta := float64(i) * 2.0 * math.Pi / float64(numSegments)
 		x := centerX + radius*float32(math.Cos(theta))
 		y := centerY + radius*float32(math.Sin(theta))
-		tx, ty := page.transformPoint(x, y)
-		line.AddPoint(tx, ty)
+		//tx, ty := page.transformPoint(x, y)
+		line.AddPoint(x, y)
 	}
 }
 
@@ -295,26 +295,26 @@ func (page *ReMarkablePage) DrawFilledRectangle(x1, y1, x2, y2 float32) {
 
 	// Bottom left to bottom right
 	for x := x1; x <= x2; x++ {
-		tx, ty := page.transformPoint(x, y1)
-		line.AddPoint(tx, ty)
+		//tx, ty := page.transformPoint(x, y1)
+		line.AddPoint(x, y1)
 	}
 
 	// Bottom right to top right
 	for y := y1; y <= y2; y++ {
-		tx, ty := page.transformPoint(x2, y)
-		line.AddPoint(tx, ty)
+		//tx, ty := page.transformPoint(x2, y)
+		line.AddPoint(x2, y)
 	}
 
 	// Top right to top left
 	for x := x2; x >= x1; x-- {
-		tx, ty := page.transformPoint(x, y2)
-		line.AddPoint(tx, ty)
+		//tx, ty := page.transformPoint(x, y2)
+		line.AddPoint(x, y2)
 	}
 
 	// Top left to bottom left (closing the rectangle)
 	for y := y2; y >= y1; y-- {
-		tx, ty := page.transformPoint(x1, y)
-		line.AddPoint(tx, ty)
+		//tx, ty := page.transformPoint(x1, y)
+		line.AddPoint(x1, y)
 	}
 }
 
@@ -343,6 +343,14 @@ func Test() {
 		page.DrawCircle(center.x*1.2, center.y*1.25, float32(i*10))
 		page.DrawCircle(center.x*.85, center.y*1.25, float32(i*10))
 
+	}
+
+	for i := 0; i < 6; i++ {
+		var x float32 = 800
+		var y float32 = 800
+
+		var squareSize float32 = 5.0
+		page.DrawFilledRectangle(x, y, (x+squareSize)*float32(i), (y+squareSize)*float32(i))
 	}
 
 	p0 := rmPoint{center.x * .65, center.x * 1.25, 0, 0, 0, 0}

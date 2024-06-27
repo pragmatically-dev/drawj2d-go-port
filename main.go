@@ -49,11 +49,11 @@ import (
 
 func main() {
 	//t.Test()
-	//t.TestRmDoc()
-	//t.TestCannyEdgeDetection("image.png")
+	t.TestCannyEdgeDetection("test-2.png")
+	t.TestRmDoc()
 	//t.TestInvert("PostSobelResult.png")
 	//t.TestInvert("PostVertSobelResult.png")
 	//t.TestInvert("PostHorSobelResult.png")
-	t.TestInvert("PostLaplacianResult.png")
+	//t.TestInvert("PostLaplacianResult.png")
 
 }
