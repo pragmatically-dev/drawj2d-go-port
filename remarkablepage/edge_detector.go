@@ -23,16 +23,16 @@ func TestCannyEdgeDetection(imagePath string) {
 		return
 	}
 	img, _ = bl.GaussianBlurGray(img, 1, 2, padding.BorderReplicate)
-	img, _ = re.ResizeGray(img, .5, .5, re.InterLinear)
+	img, _ = re.ResizeGray(img, .7, .7, re.InterLinear)
 
-	sobelGray, _ := ed.SobelGray(img, padding.BorderReplicate)
-	vertSobelGray, _ := ed.VerticalSobelGray(img, padding.BorderReplicate)
-	horSobelGray, _ := ed.HorizontalSobelGray(img, padding.BorderReplicate)
+	//sobelGray, _ := ed.SobelGray(img, padding.BorderReplicate)
+	//vertSobelGray, _ := ed.VerticalSobelGray(img, padding.BorderReplicate)
+	//horSobelGray, _ := ed.HorizontalSobelGray(img, padding.BorderReplicate)
 	laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
 
-	im.Imwrite(sobelGray, "PostSobelResult.png")
-	im.Imwrite(vertSobelGray, "PostVertSobelResult.png")
-	im.Imwrite(horSobelGray, "PostHorSobelResult.png")
+	//im.Imwrite(sobelGray, "PostSobelResult.png")
+	//im.Imwrite(vertSobelGray, "PostVertSobelResult.png")
+	//im.Imwrite(horSobelGray, "PostHorSobelResult.png")
 	im.Imwrite(laplacianGray, "PostLaplacianResult.png") //BEST RESULT
 
 }

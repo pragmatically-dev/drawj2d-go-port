@@ -50,10 +50,10 @@ import (
 func main() {
 	//t.Test()
 	//t.TestRmDoc()
-	t.TestCannyEdgeDetection("image.png")
-	t.TestInvert("PostSobelResult.png")
-	t.TestInvert("PostVertSobelResult.png")
-	t.TestInvert("PostHorSobelResult.png")
+	//t.TestCannyEdgeDetection("image.png")
+	//t.TestInvert("PostSobelResult.png")
+	//t.TestInvert("PostVertSobelResult.png")
+	//t.TestInvert("PostHorSobelResult.png")
 	t.TestInvert("PostLaplacianResult.png")
 
 }
