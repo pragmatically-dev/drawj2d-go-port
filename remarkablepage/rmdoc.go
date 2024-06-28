@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -21,13 +20,15 @@ type ReMarkableAPIrmdoc struct {
 	Metadata0rm      string `json:"metadata0rm"`
 	Rmdata           []byte `json:"-"`
 	Time             int64  `json:"time"`
+	dirToSave        string
 }
 
 // NewReMarkableAPIrmdoc crea una nueva instancia de ReMarkableAPIrmdoc
-func NewReMarkableAPIrmdoc(zipfile string, rmdata []byte) *ReMarkableAPIrmdoc {
+func NewReMarkableAPIrmdoc(zipfile, dirToSave string, rmdata []byte) *ReMarkableAPIrmdoc {
 	rmdoc := &ReMarkableAPIrmdoc{
-		Rmdata: rmdata,
-		Time:   time.Now().Unix(),
+		Rmdata:    rmdata,
+		Time:      time.Now().Unix(),
+		dirToSave: dirToSave,
 	}
 	rmdoc.process(zipfile)
 	return rmdoc
@@ -51,7 +52,8 @@ func (rmdoc *ReMarkableAPIrmdoc) process(zipfile string) {
 }
 
 func (rmdoc *ReMarkableAPIrmdoc) writeZip(zipfile, notebookID, pageID string) {
-	f, err := os.Create(zipfile)
+	f, err := os.Create(fmt.Sprintf("%s", zipfile))
+
 	if err != nil {
 		log.Fatalf("Error creating zip file: %v", err)
 	}
@@ -298,7 +300,7 @@ func (rmdoc *ReMarkableAPIrmdoc) createNotebookMetadata(visibleName string) stri
 		LastOpened:     rmdoc.Time,
 		LastOpenedPage: 0,
 		Parent:         "",
-		Pinned:         false,
+		Pinned:         true,
 		Type:           "DocumentType",
 		VisibleName:    visibleName,
 	}
@@ -311,13 +313,8 @@ func (rmdoc *ReMarkableAPIrmdoc) createNotebookMetadata(visibleName string) stri
 	return string(notebookMetadataJSON)
 }
 
-func TestRmDoc() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run main.go <filename.rm>")
-		return
-	}
+func CreateRmDoc(rmName, dirToSave string) string {
 
-	rmName := os.Args[1]
 	var zipName string
 
 	if strings.HasSuffix(rmName, ".rm") {
@@ -326,12 +323,13 @@ func TestRmDoc() {
 		zipName = rmName + ".rmdoc"
 	}
 
-	rmfiledata, err := ioutil.ReadFile(rmName)
+	rmfiledata, err := os.ReadFile(rmName)
 	if err != nil {
 		log.Fatalf("Error reading .rm file: %v", err)
 	}
 
-	_ = NewReMarkableAPIrmdoc(zipName, rmfiledata)
+	_ = NewReMarkableAPIrmdoc(zipName, dirToSave, rmfiledata)
+	DebugPrint("File" + zipName + "created successfully.")
 
-	fmt.Println("File", zipName, "created successfully.")
+	return zipName
 }

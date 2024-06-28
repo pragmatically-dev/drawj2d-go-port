@@ -3,6 +3,7 @@ package remarkablepage
 import (
 	"fmt"
 	"image"
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -28,12 +29,12 @@ func GetFileNameWithoutExtension(filePath string) string {
 	return strings.TrimSuffix(base, ext)
 }
 
-func DetectWhitePixels(img *image.Gray, filename string) {
+func DetectWhitePixels(img *image.Gray, filename, dirToSave string) {
 	rmFile := GetFileNameWithoutExtension(filename)
 
-	file, err := os.Create(fmt.Sprintf("%s.rm", rmFile))
+	file, err := os.Create(fmt.Sprintf("%s/%s.rm", dirToSave, rmFile))
 	if err != nil {
-		debugPrint("Error creating file:", err)
+		DebugPrint("Error creating file:", err)
 		return
 	}
 	defer file.Close()
@@ -61,51 +62,56 @@ func DetectWhitePixels(img *image.Gray, filename string) {
 
 	err = page.Export()
 	if err != nil {
-		debugPrint("Error exporting page:", err)
+		log.Fatalln("Error exporting page:", err)
+		return
 	}
 
-	debugPrint("File testPNGConversion.rm generated successfully.")
 }
 
-func TestCannyEdgeDetection(imagePath string) {
+func CannyEdgeDetection(imagePath, DirToSave string) {
 
 	// Check the file size
 	fileInfo, err := os.Stat(imagePath)
 	if err != nil {
-		debugPrint("Error getting file information:", err)
+		DebugPrint("Error getting file information:", err)
 		return
 	}
 
+	predicateFilesize := fileInfo.Size() > 50*1024
 	// If the file size is greater than 200 KB, perform resizing
-	if fileInfo.Size() > 50*1024 {
-		debugPrint("The file size is greater than 200 KB, resizing will be performed.")
+	if predicateFilesize {
+
+		DebugPrint("The file size is greater than 50 KB, agressive resizing will be performed.")
 		img, err := im.ImreadGray(imagePath)
 		if err != nil {
-			debugPrint("Error opening the file:", err)
+			DebugPrint("Error opening the file:", err)
 			return
 		}
 
 		img, _ = rz.ResizeGray(img, 0.7, 0.7, rz.InterLinear)
 		laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
 
-		DetectWhitePixels(laplacianGray, imagePath)
-
-	} else {
-		debugPrint("The file size is less than 200 KB, resizing will not be performed.")
-		img, err := im.ImreadGray(imagePath)
-		if err != nil {
-			debugPrint("Error opening the file:", err)
-			return
-		}
-
-		laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
-
-		DetectWhitePixels(laplacianGray, imagePath)
+		DetectWhitePixels(laplacianGray, imagePath, DirToSave)
 
 	}
+
+	if !predicateFilesize {
+
+		DebugPrint("The file size is less than 50 KB, lite resizing will be performed.")
+		img, err := im.ImreadGray(imagePath)
+		if err != nil {
+			DebugPrint("Error opening the file:", err)
+			return
+		}
+		img, _ = rz.ResizeGray(img, 0.8, 0.8, rz.InterLinear)
+		laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
+		DetectWhitePixels(laplacianGray, imagePath, DirToSave)
+
+	}
+
 }
 
-func debugPrint(info string, opt ...error) {
+func DebugPrint(info string, opt ...error) {
 	if debug {
 		fmt.Println(info, opt)
 	}

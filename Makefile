@@ -1,3 +1,4 @@
 
 build:
-	go build -a -gcflags=all="-l -B" -ldflags="-w -s"
+	GOOS=linux GOARCH=arm go build -ldflags="-w -s" -a
+
