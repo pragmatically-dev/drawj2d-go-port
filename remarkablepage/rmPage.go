@@ -244,9 +244,9 @@ func (page *ReMarkablePage) AddPixel(x, y float32) {
 	line := page.AddLine()
 	const c = 0.1
 
-	line.AddPoint(x-c, y-c)
+	line.AddPoint(x-c, y)
 	line.AddPoint(x, y)
-	line.AddPoint(x+c, y+c)
+	line.AddPoint(x+c, y)
 }
 
 // DrawFilledRectangle draws a filled rectangle on the page
