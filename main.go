@@ -13,8 +13,12 @@ import (
 	"strings"
 	"time"
 
+	ed "github.com/ernyoke/imger/edgedetection"
+	im "github.com/ernyoke/imger/imgio"
+	"github.com/ernyoke/imger/padding"
 	"github.com/fsnotify/fsnotify"
 	rp "github.com/pragmatically-dev/drawj2d-rm/remarkablepage"
+	_ "go.uber.org/automaxprocs"
 	"gopkg.in/yaml.v2"
 )
 
@@ -28,7 +32,7 @@ type Config struct {
 
 func postRmDocToWebInterface(filepath, DirToSave string) {
 	//fmt.Println("Starting Conversion")
-	rp.CannyEdgeDetection(filepath, DirToSave)
+	rp.LaplacianEdgeDetection(filepath, DirToSave)
 
 	//fmt.Println("File testPNGConversion.rm generated successfully.")
 	rmFile := rp.GetFileNameWithoutExtension(filepath)
@@ -153,7 +157,7 @@ func deleteFile(filepath string) error {
 	return os.Remove(filepath)
 }
 
-func main() {
+func AppStart() {
 	configFile, err := os.ReadFile("/home/root/.config/png2rm/config.yaml")
 	if err != nil {
 		log.Fatalf("error: %v", err)
@@ -167,4 +171,53 @@ func main() {
 
 	fmt.Println("<--- Looking for new Screenshots --->")
 	watchForScreenshots(config.DirToSearch, config.FilePrefix, config.DirToSave)
+}
+
+func main() {
+	Test2()
+	//Test3()
+}
+
+func Test3() {
+	img, err := im.ImreadGray("image.png")
+	if err != nil {
+		rp.DebugPrint("Error opening the file:", err)
+		return
+	}
+	laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
+
+	rp.BuildBooleanMatrix(laplacianGray)
+
+}
+
+func Test2() {
+	rp.LaplacianEdgeDetection("/home/nieva/Proyectos/drawj2d-rm/image.png", "/home/nieva/Proyectos/drawj2d-rm/")
+
+	//fmt.Println("File testPNGConversion.rm generated successfully.")
+	rmFile := rp.GetFileNameWithoutExtension("/home/nieva/Proyectos/drawj2d-rm/image.png")
+	rmFile = fmt.Sprintf("%s/%s.rm", "/home/nieva/Proyectos/drawj2d-rm/", rmFile)
+	_ = rp.CreateRmDoc(rmFile, "/home/nieva/Proyectos/drawj2d-rm/")
+
+}
+
+func Test() {
+	file, err := os.Create("test.rm")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return
+	}
+	defer file.Close()
+
+	page := rp.NewReMarkablePage(file, 1872) // Asumiendo una altura de página de 1000 unidades
+
+	page.AddPixel(500, 500)
+
+	err = page.Export()
+	if err != nil {
+		fmt.Println("Error exporting page:", err)
+		return
+	}
+	_ = rp.CreateRmDoc("/home/nieva/Proyectos/drawj2d-rm/test.rm", "")
+
+	fmt.Println("File testRemarkablePageSmiley.rm generated successfully.")
 }
