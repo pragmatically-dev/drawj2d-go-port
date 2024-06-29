@@ -52,39 +52,6 @@ func BuildBooleanMatrix(img *image.Gray) [][]bool {
 	return boolImgMap
 }
 
-/*
-func DetectWhitePixels(img *image.Gray, filename, dirToSave string) {
-	rmFile := GetFileNameWithoutExtension(filename)
-
-	file, err := os.Create(fmt.Sprintf("%s/%s.rm", dirToSave, rmFile))
-	if err != nil {
-		DebugPrint("Error creating file:", err)
-		return
-	}
-	defer file.Close()
-
-	page := NewReMarkablePage(file, float32(Y_MAX))
-
-	size := img.Bounds().Max
-	utils.ParallelForEachPixel(size,
-
-		func(x, y int) {
-			// If the pixel is not black, assign the value to the output image and add a point to the reMarkable page
-			if img.GrayAt(x, y).Y > 0 {
-				page.AddPixel(float32(x), float32(y))
-			}
-
-		},
-	)
-
-	err = page.Export()
-	if err != nil {
-		log.Fatalln("Error exporting page:", err)
-		return
-	}
-
-} */
-
 // DetectWhitePixels detects white pixels in a grayscale image and adds them to a reMarkable page
 func DetectWhitePixels(img *image.Gray, filename, dirToSave string) []byte {
 
@@ -114,48 +81,33 @@ func DetectWhitePixels(img *image.Gray, filename, dirToSave string) []byte {
 	return page.Export()
 
 }
-func LaplacianEdgeDetection(imagePath, DirToSave string) []byte {
+func LaplacianEdgeDetection(imagePath, dirToSave string) []byte {
 
-	// Check the file size
 	fileInfo, err := os.Stat(imagePath)
 	if err != nil {
 		DebugPrint("Error getting file information:", err)
 		return nil
 	}
 
-	predicateFilesize := fileInfo.Size() > 50*1024
-	// If the file size is greater than 50 KB, perform resizing
-	if predicateFilesize {
-
-		DebugPrint("The file size is greater than 50 KB, agressive resizing will be performed.")
-		img, err := DecodeToGray(imagePath)
-		if err != nil {
-			DebugPrint("Error opening the file:", err)
-			return nil
-		}
-
-		img, _ = ResizeGray(img, 0.75, 0.75, InterLinear)
-		laplacianGray, _ := LaplacianGray(img, CBorderReplicate, K8)
-
-		return DetectWhitePixels(laplacianGray, imagePath, DirToSave)
-
-	}
-
-	if !predicateFilesize {
-
+	fileSize := fileInfo.Size()
+	resizeFactor := 0.85
+	if fileSize > 50*1024 {
+		DebugPrint("The file size is greater than 50 KB, aggressive resizing will be performed.")
+		resizeFactor = 0.75
+	} else {
 		DebugPrint("The file size is less than 50 KB, lite resizing will be performed.")
-		img, err := DecodeToGray(imagePath)
-		if err != nil {
-			DebugPrint("Error opening the file:", err)
-			return nil
-		}
-		img, _ = ResizeGray(img, 0.8, 0.8, InterLinear)
-		laplacianGray, _ := LaplacianGray(img, CBorderReplicate, K8)
-		return DetectWhitePixels(laplacianGray, imagePath, DirToSave)
-
 	}
 
-	return nil
+	img, err := DecodeToGray(imagePath)
+	if err != nil {
+		DebugPrint("Error opening the file:", err)
+		return nil
+	}
+
+	img, _ = ResizeGray(img, resizeFactor, resizeFactor, InterLinear)
+	laplacianGray, _ := LaplacianGray(img, CBorderReplicate, K8)
+	return DetectWhitePixels(laplacianGray, imagePath, dirToSave)
+
 }
 
 func DebugPrint(info string, opt ...error) {

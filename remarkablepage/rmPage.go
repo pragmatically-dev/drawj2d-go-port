@@ -68,7 +68,9 @@ func (page *ReMarkablePage) AddLine() *rmLine {
 	defer page.mu.Unlock()
 
 	line := &rmLine{
-		pointList: make([]*rmPoint, 0),
+		pointList:     make([]*rmPoint, 0),
+		brushBaseSize: 1,
+		brushType:     17,
 	}
 	page.lines = append(page.lines, line)
 	if page.debug {
@@ -79,17 +81,17 @@ func (page *ReMarkablePage) AddLine() *rmLine {
 }
 
 // AddPoint adds a point to a line
-func (line *rmLine) AddPoint(x, y float32) *rmPoint {
+func (line *rmLine) AddPoint(x, y float32) {
 	point := &rmPoint{
 		x:         x,
 		y:         y,
 		speed:     0.1,
 		direction: 0,
-		width:     2.125,
+		width:     2,
 		pressure:  1.0,
 	}
 	line.pointList = append(line.pointList, point)
-	return point
+
 }
 
 // Export writes the content of the page to the output file
@@ -198,7 +200,7 @@ func (page *ReMarkablePage) DrawBezierCurve(p0, p1, p2, p3 rmPoint) {
 // AddPixel adds a pixel to the page
 func (page *ReMarkablePage) AddPixel(x, y float32) {
 	line := page.AddLine()
-	const c = 0.1
+	const c = 0.01
 
 	line.AddPoint(x-c, y)
 	line.AddPoint(x, y)
