@@ -8,10 +8,11 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"runtime"
+	"time"
 
 	fp "path/filepath"
 	"strings"
-	"time"
 
 	"github.com/fsnotify/fsnotify"
 	rp "github.com/pragmatically-dev/drawj2d-rm/remarkablepage"
@@ -27,27 +28,28 @@ type Config struct {
 	ServerAddress string `yaml:"server_address"`
 }
 
-func postRmDocToWebInterface(filepath, DirToSave string) {
-	//fmt.Println("Starting Conversion")
-	rmData := rp.LaplacianEdgeDetection(filepath, DirToSave)
+var httpClient = &http.Client{}
 
-	//fmt.Println("File testPNGConversion.rm generated successfully.")
+func postRmDocToWebInterface(filepath, dirToSave string) {
+	rmData := rp.LaplacianEdgeDetection(filepath, dirToSave)
 	rmFile := rp.GetFileNameWithoutExtension(filepath)
-	rmFile = fmt.Sprintf("%s/%s.rm", DirToSave, rmFile)
-	rmDocBuff, rmDocPath := rp.CreateRmDoc(rmFile, DirToSave, rmData)
+	rmFile = fmt.Sprintf("%s/%s.rm", dirToSave, rmFile)
+	rmDocBuff, rmDocPath := rp.CreateRmDoc(rmFile, dirToSave, rmData)
 	if rmDocBuff == nil {
 		fmt.Println("Error al crear zip en memoria:")
 		return
 	}
-	go func(rmDocPath string, rmdocbuff *bytes.Buffer) {
-		url := "http://10.11.99.1"
 
+	go func(rmDocPath string, rmdocbuff *bytes.Buffer) {
+		defer deleteFile(rmDocPath)
+		defer deleteFile(filepath)
+		defer runtime.GC()
+
+		url := "http://10.11.99.1"
 		var requestBody bytes.Buffer
 		writer := multipart.NewWriter(&requestBody)
 
-		// Create a form file field
 		part, err := writer.CreateFormFile("file", fp.Base(rmDocPath))
-
 		if err != nil {
 			fmt.Println("Error creating the form file field:", err)
 			return
@@ -59,91 +61,71 @@ func postRmDocToWebInterface(filepath, DirToSave string) {
 			return
 		}
 
-		// Close the writer to complete the multipart form
 		err = writer.Close()
 		if err != nil {
 			fmt.Println("Error closing the writer:", err)
 			return
 		}
 
-		// Create the HTTP request
 		req, err := http.NewRequest("POST", url+"/upload", &requestBody)
 		if err != nil {
 			fmt.Println("Error creating the request:", err)
 			return
 		}
-
-		// Set the content type
 		req.Header.Set("Content-Type", writer.FormDataContentType())
 
-		// Send the request
-		client := &http.Client{}
-		resp, err := client.Do(req)
+		resp, err := httpClient.Do(req) // Usa el cliente HTTP reutilizable
 		if err != nil {
 			fmt.Println("Error sending the request:", err)
 			return
 		}
 		defer resp.Body.Close()
-		defer client.CloseIdleConnections()
 
-		go deleteFile(rmDocPath)
 	}(rmDocPath, rmDocBuff)
-
 }
 
 func watchForScreenshots(dirToSearch, filePrefix, dirToSave string) {
-	//The watcher will give us two channels, one for Events and other for errors
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer watcher.Close()
 
-	done := make(chan bool)
-
 	err = watcher.Add(dirToSearch)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	go func() {
+	//Predicates
+	doesItContainPrefix := func(event fsnotify.Event) bool {
+		return strings.HasPrefix(fp.Base(event.Name), filePrefix)
+	}
+	isNewFile := func(event fsnotify.Event) bool {
+		return event.Has(fsnotify.Create)
+	}
 
-		for {
-			// Here we receive data from two channels
-			//A select blocks until one of its cases can run, then it executes that case.
-			//more info on [https://blog.stackademic.com/go-concurrency-visually-explained-select-statement-b546596c8e6b]
-			select {
-
-			case event, ok := <-watcher.Events:
-
-				if !ok {
-
-					return
-				}
-
-				if (event.Has(fsnotify.Create)) && (strings.HasPrefix(fp.Base(event.Name), filePrefix)) {
-
-					//DON'T REMOVE: Remarkable screenshot takes almost a sec to save on the filesystm
-					rp.DebugPrint("Screenshot found: " + event.Name)
-					time.Sleep(1200 * time.Millisecond)
-
-					go postRmDocToWebInterface(event.Name, dirToSave)
-					time.Sleep(5 * time.Second)
-					if err := deleteFile(event.Name); err != nil {
-						log.Printf("Error deleting file: %v\n", err)
-					}
-				}
-
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Println("error:", err)
+	for {
+		select {
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return
 			}
+
+			if isNewFile(event) && doesItContainPrefix(event) {
+				//DO NOT REMOVE: The remarkable takes 1200ms to save the png to /home/root
+				//Wasted hours for trying to fix this: 15
+				time.Sleep(1200 * time.Millisecond)
+				rp.DebugPrint("Screenshot found: " + event.Name)
+				go postRmDocToWebInterface(event.Name, dirToSave)
+			}
+
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return
+			}
+			log.Println("error:", err)
 		}
-	}()
-	//SYNC GO ROUTINE
-	<-done
+	}
 }
 
 func deleteFile(filepath string) error {

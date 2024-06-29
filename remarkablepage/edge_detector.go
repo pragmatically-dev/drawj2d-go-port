@@ -11,7 +11,9 @@ import (
 )
 
 const (
-	debug = false
+	debug                   = false
+	LITE_RESIZE_FACTOR      = 0.80
+	AGRESSIVE_RESIZE_FACTOR = 0.70
 )
 
 func GetFileNameWithoutExtension(filePath string) string {
@@ -60,7 +62,7 @@ func DetectWhitePixels(img *image.Gray, filename, dirToSave string) []byte {
 	size := img.Bounds().Max
 	var wg sync.WaitGroup
 
-	// Función que procesa una fila de píxeles
+	// self documented bruh
 	processRow := func(y int) {
 		defer wg.Done()
 		for x := 0; x < size.X; x++ {
@@ -70,7 +72,7 @@ func DetectWhitePixels(img *image.Gray, filename, dirToSave string) []byte {
 		}
 	}
 
-	// Lanzar gorutinas para procesar cada fila
+	// spawn go routines for each row
 	for y := 0; y < size.Y; y++ {
 		wg.Add(1)
 		go processRow(y)
@@ -90,10 +92,11 @@ func LaplacianEdgeDetection(imagePath, dirToSave string) []byte {
 	}
 
 	fileSize := fileInfo.Size()
-	resizeFactor := 0.95
+
+	resizeFactor := LITE_RESIZE_FACTOR
 	if fileSize > 50*1024 {
 		DebugPrint("The file size is greater than 50 KB, aggressive resizing will be performed.")
-		resizeFactor = 0.8
+		resizeFactor = AGRESSIVE_RESIZE_FACTOR
 	} else {
 		DebugPrint("The file size is less than 50 KB, lite resizing will be performed.")
 	}

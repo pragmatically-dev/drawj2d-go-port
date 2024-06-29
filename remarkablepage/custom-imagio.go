@@ -22,9 +22,13 @@ func DecodeAndConfig(path string) (image.Config, error) {
 	return config, err
 }
 
-// DecodeToGray decodes an image to grayscale from the given path.
 func DecodeToGray(path string) (*image.Gray, error) {
-	file, err := os.Open(path)
+
+	var file *os.File
+	var err error
+
+	file, err = os.Open(path)
+
 	if err != nil {
 		return nil, err
 	}
