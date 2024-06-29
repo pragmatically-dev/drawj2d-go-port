@@ -1,11 +1,11 @@
 package remarkablepage
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"image/color"
 	"math"
-	"os"
 	"sync"
 )
 
@@ -22,7 +22,7 @@ const (
 type ReMarkablePage struct {
 	lines      []*rmLine
 	debug      bool
-	out        *os.File
+	out        []byte
 	colors     map[string]color.RGBA
 	pageHeight float32
 	mu         sync.Mutex // Add a mutex for thread safety
@@ -48,17 +48,17 @@ type rmPoint struct {
 }
 
 // NewReMarkablePage creates a new reMarkable page
-func NewReMarkablePage(out *os.File, pageHeight float32) *ReMarkablePage {
+func NewReMarkablePage() *ReMarkablePage {
 	return &ReMarkablePage{
 		lines: make([]*rmLine, 0),
 		debug: false,
-		out:   out,
+		out:   make([]byte, 0), // Initialize with an empty slice
 		colors: map[string]color.RGBA{
 			"red":   {R: 217, G: 7, B: 7, A: 255},
 			"blue":  {R: 0, G: 98, B: 204, A: 255},
 			"black": {R: 0, G: 0, B: 0, A: 255},
 		},
-		pageHeight: pageHeight,
+		pageHeight: Y_MAX,
 	}
 }
 
@@ -74,6 +74,7 @@ func (page *ReMarkablePage) AddLine() *rmLine {
 	if page.debug {
 		fmt.Printf("[RemarkablePage] line added. Nb lines: %d\n", len(page.lines))
 	}
+
 	return line
 }
 
@@ -92,120 +93,75 @@ func (line *rmLine) AddPoint(x, y float32) *rmPoint {
 }
 
 // Export writes the content of the page to the output file
-func (page *ReMarkablePage) Export() error {
-	defer page.out.Close()
+func (page *ReMarkablePage) Export() []byte {
+	page.mu.Lock()
+	defer page.mu.Unlock()
 
 	// Write the header
 	header := []byte(HEADER_V5)
-	_, err := page.out.Write(header)
-	if err != nil {
-		return err
-	}
+	page.out = append(page.out, header...)
 
-	// Write the page
+	// Write the number of layers (1 for simplicity)
 	nbLayers := int32(1)
-	err = binary.Write(page.out, binary.LittleEndian, nbLayers)
-	if err != nil {
-		return err
-	}
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, nbLayers)
+	page.out = append(page.out, buf.Bytes()...)
 
 	// Write the layers
-	err = page.writeLayer()
-	if err != nil {
-		return err
-	}
+	page.writeLayer()
 
-	return nil
+	return page.out
 }
 
 // writeLayer writes a layer of lines to the output file
-func (page *ReMarkablePage) writeLayer() error {
-	page.mu.Lock() // Lock the mutex before accessing shared resources
-	defer page.mu.Unlock()
+func (page *ReMarkablePage) writeLayer() {
+	buf := new(bytes.Buffer)
 
-	err := binary.Write(page.out, binary.LittleEndian, int32(len(page.lines)))
-	if err != nil {
-		return err
-	}
+	// Write the number of lines
+	nbLines := int32(len(page.lines))
+	binary.Write(buf, binary.LittleEndian, nbLines)
+	page.out = append(page.out, buf.Bytes()...)
 
+	// Write each line
 	for _, line := range page.lines {
-		err := page.writeLine(line)
-		if err != nil {
-			return err
-		}
+		page.writeLine(line)
 	}
-	return nil
 }
 
 // writeLine writes a line and its points to the output file
-func (page *ReMarkablePage) writeLine(line *rmLine) error {
-	err := binary.Write(page.out, binary.LittleEndian, line.brushType)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(page.out, binary.LittleEndian, line.color)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(page.out, binary.LittleEndian, line.padding)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(page.out, binary.LittleEndian, line.brushBaseSize)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(page.out, binary.LittleEndian, line.unknownLineAttribute)
-	if err != nil {
-		return err
-	}
+func (page *ReMarkablePage) writeLine(line *rmLine) {
+	buf := new(bytes.Buffer)
 
+	// Write line attributes
+	binary.Write(buf, binary.LittleEndian, line.brushType)
+	binary.Write(buf, binary.LittleEndian, line.color)
+	binary.Write(buf, binary.LittleEndian, line.padding)
+	binary.Write(buf, binary.LittleEndian, line.brushBaseSize)
+	binary.Write(buf, binary.LittleEndian, line.unknownLineAttribute)
+
+	// Write the number of points
 	nbPoints := int32(len(line.pointList))
-	err = binary.Write(page.out, binary.LittleEndian, nbPoints)
-	if err != nil {
-		return err
-	}
+	binary.Write(buf, binary.LittleEndian, nbPoints)
+	page.out = append(page.out, buf.Bytes()...)
 
+	// Write each point
 	for _, point := range line.pointList {
-		err := page.writePoint(point)
-		if err != nil {
-			return err
-		}
+		page.writePoint(point)
 	}
-
-	if page.debug {
-		fmt.Printf("                 line with points: %d\n", len(line.pointList))
-	}
-	return nil
 }
 
 // writePoint writes a point to the output file
-func (page *ReMarkablePage) writePoint(point *rmPoint) error {
-	err := binary.Write(page.out, binary.LittleEndian, point.x)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(page.out, binary.LittleEndian, point.y)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(page.out, binary.LittleEndian, point.speed)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(page.out, binary.LittleEndian, point.direction)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(page.out, binary.LittleEndian, point.width)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(page.out, binary.LittleEndian, point.pressure)
-	if err != nil {
-		return err
-	}
-	return nil
+func (page *ReMarkablePage) writePoint(point *rmPoint) {
+	buf := new(bytes.Buffer)
+
+	// Write point attributes
+	binary.Write(buf, binary.LittleEndian, point.x)
+	binary.Write(buf, binary.LittleEndian, point.y)
+	binary.Write(buf, binary.LittleEndian, point.speed)
+	binary.Write(buf, binary.LittleEndian, point.direction)
+	binary.Write(buf, binary.LittleEndian, point.width)
+	binary.Write(buf, binary.LittleEndian, point.pressure)
+	page.out = append(page.out, buf.Bytes()...)
 }
 
 // transformPoint transforms a point to the new coordinate system

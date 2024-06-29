@@ -3,9 +3,9 @@ package remarkablepage
 import (
 	"fmt"
 	"image"
-	"log"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"os"
 
@@ -58,6 +58,7 @@ func BuildBooleanMatrix(img *image.Gray) [][]bool {
 	return boolImgMap
 }
 
+/*
 func DetectWhitePixels(img *image.Gray, filename, dirToSave string) {
 	rmFile := GetFileNameWithoutExtension(filename)
 
@@ -88,15 +89,44 @@ func DetectWhitePixels(img *image.Gray, filename, dirToSave string) {
 		return
 	}
 
-}
+} */
 
-func LaplacianEdgeDetection(imagePath, DirToSave string) {
+// DetectWhitePixels detects white pixels in a grayscale image and adds them to a reMarkable page
+func DetectWhitePixels(img *image.Gray, filename, dirToSave string) []byte {
+
+	page := NewReMarkablePage()
+
+	size := img.Bounds().Max
+	var wg sync.WaitGroup
+
+	// Función que procesa una fila de píxeles
+	processRow := func(y int) {
+		defer wg.Done()
+		for x := 0; x < size.X; x++ {
+			if img.GrayAt(x, y).Y > 0 {
+				page.AddPixel(float32(x), float32(y))
+			}
+		}
+	}
+
+	// Lanzar gorutinas para procesar cada fila
+	for y := 0; y < size.Y; y++ {
+		wg.Add(1)
+		go processRow(y)
+	}
+
+	wg.Wait()
+
+	return page.Export()
+
+}
+func LaplacianEdgeDetection(imagePath, DirToSave string) []byte {
 
 	// Check the file size
 	fileInfo, err := os.Stat(imagePath)
 	if err != nil {
 		DebugPrint("Error getting file information:", err)
-		return
+		return nil
 	}
 
 	predicateFilesize := fileInfo.Size() > 50*1024
@@ -107,13 +137,13 @@ func LaplacianEdgeDetection(imagePath, DirToSave string) {
 		img, err := im.ImreadGray(imagePath)
 		if err != nil {
 			DebugPrint("Error opening the file:", err)
-			return
+			return nil
 		}
 
-		img, _ = rz.ResizeGray(img, 0.7, 0.7, rz.InterLinear)
+		img, _ = rz.ResizeGray(img, 0.75, 0.75, rz.InterLinear)
 		laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
 
-		DetectWhitePixels(laplacianGray, imagePath, DirToSave)
+		return DetectWhitePixels(laplacianGray, imagePath, DirToSave)
 
 	}
 
@@ -123,14 +153,15 @@ func LaplacianEdgeDetection(imagePath, DirToSave string) {
 		img, err := im.ImreadGray(imagePath)
 		if err != nil {
 			DebugPrint("Error opening the file:", err)
-			return
+			return nil
 		}
 		img, _ = rz.ResizeGray(img, 0.8, 0.8, rz.InterLinear)
 		laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
-		DetectWhitePixels(laplacianGray, imagePath, DirToSave)
+		return DetectWhitePixels(laplacianGray, imagePath, DirToSave)
 
 	}
 
+	return nil
 }
 
 func DebugPrint(info string, opt ...error) {

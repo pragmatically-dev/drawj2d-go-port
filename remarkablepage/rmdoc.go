@@ -2,10 +2,9 @@ package remarkablepage
 
 import (
 	"archive/zip"
+	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -21,6 +20,7 @@ type ReMarkableAPIrmdoc struct {
 	Rmdata           []byte `json:"-"`
 	Time             int64  `json:"time"`
 	dirToSave        string
+	internalBuffer   *bytes.Buffer
 }
 
 // NewReMarkableAPIrmdoc crea una nueva instancia de ReMarkableAPIrmdoc
@@ -52,12 +52,7 @@ func (rmdoc *ReMarkableAPIrmdoc) process(zipfile string) {
 }
 
 func (rmdoc *ReMarkableAPIrmdoc) writeZip(zipfile, notebookID, pageID string) {
-	f, err := os.Create(fmt.Sprintf("%s", zipfile))
-
-	if err != nil {
-		log.Fatalf("Error creating zip file: %v", err)
-	}
-	defer f.Close()
+	f := new(bytes.Buffer)
 
 	zipWriter := zip.NewWriter(f)
 	defer zipWriter.Close()
@@ -94,6 +89,8 @@ func (rmdoc *ReMarkableAPIrmdoc) writeZip(zipfile, notebookID, pageID string) {
 	if err != nil {
 		log.Fatalf("Error writing .rm file to zip entry: %v", err)
 	}
+
+	rmdoc.internalBuffer = f
 }
 
 func (rmdoc *ReMarkableAPIrmdoc) createContent(pageID string) string {
@@ -313,8 +310,7 @@ func (rmdoc *ReMarkableAPIrmdoc) createNotebookMetadata(visibleName string) stri
 	return string(notebookMetadataJSON)
 }
 
-func CreateRmDoc(rmName, dirToSave string) string {
-
+func CreateRmDoc(rmName, dirToSave string, rmData []byte) (*bytes.Buffer, string) {
 	var zipName string
 
 	if strings.HasSuffix(rmName, ".rm") {
@@ -323,13 +319,10 @@ func CreateRmDoc(rmName, dirToSave string) string {
 		zipName = rmName + ".rmdoc"
 	}
 
-	rmfiledata, err := os.ReadFile(rmName)
-	if err != nil {
-		log.Fatalf("Error reading .rm file: %v", err)
-	}
+	rmfiledata := rmData
 
-	_ = NewReMarkableAPIrmdoc(zipName, dirToSave, rmfiledata)
-	DebugPrint("File" + zipName + "created successfully.")
+	rmdoc := NewReMarkableAPIrmdoc(zipName, dirToSave, rmfiledata)
+	DebugPrint("File " + zipName + " created successfully.")
 
-	return zipName
+	return rmdoc.internalBuffer, zipName
 }
