@@ -8,12 +8,6 @@ import (
 	"sync"
 
 	"os"
-
-	ed "github.com/ernyoke/imger/edgedetection"
-	im "github.com/ernyoke/imger/imgio"
-	"github.com/ernyoke/imger/padding"
-	rz "github.com/ernyoke/imger/resize"
-	"github.com/ernyoke/imger/utils"
 )
 
 const (
@@ -39,7 +33,7 @@ func BuildBooleanMatrix(img *image.Gray) [][]bool {
 		boolImgMap[i] = make([]bool, height)
 	}
 
-	utils.ParallelForEachPixel(bounds,
+	ParallelForEachPixel(bounds,
 
 		func(x, y int) {
 
@@ -134,14 +128,14 @@ func LaplacianEdgeDetection(imagePath, DirToSave string) []byte {
 	if predicateFilesize {
 
 		DebugPrint("The file size is greater than 50 KB, agressive resizing will be performed.")
-		img, err := im.ImreadGray(imagePath)
+		img, err := DecodeToGray(imagePath)
 		if err != nil {
 			DebugPrint("Error opening the file:", err)
 			return nil
 		}
 
-		img, _ = rz.ResizeGray(img, 0.75, 0.75, rz.InterLinear)
-		laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
+		img, _ = ResizeGray(img, 0.75, 0.75, InterLinear)
+		laplacianGray, _ := LaplacianGray(img, CBorderReplicate, K8)
 
 		return DetectWhitePixels(laplacianGray, imagePath, DirToSave)
 
@@ -150,13 +144,13 @@ func LaplacianEdgeDetection(imagePath, DirToSave string) []byte {
 	if !predicateFilesize {
 
 		DebugPrint("The file size is less than 50 KB, lite resizing will be performed.")
-		img, err := im.ImreadGray(imagePath)
+		img, err := DecodeToGray(imagePath)
 		if err != nil {
 			DebugPrint("Error opening the file:", err)
 			return nil
 		}
-		img, _ = rz.ResizeGray(img, 0.8, 0.8, rz.InterLinear)
-		laplacianGray, _ := ed.LaplacianGray(img, padding.BorderReplicate, ed.K8)
+		img, _ = ResizeGray(img, 0.8, 0.8, InterLinear)
+		laplacianGray, _ := LaplacianGray(img, CBorderReplicate, K8)
 		return DetectWhitePixels(laplacianGray, imagePath, DirToSave)
 
 	}
