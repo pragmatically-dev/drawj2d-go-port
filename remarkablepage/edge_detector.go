@@ -90,10 +90,10 @@ func LaplacianEdgeDetection(imagePath, dirToSave string) []byte {
 	}
 
 	fileSize := fileInfo.Size()
-	resizeFactor := 0.85
+	resizeFactor := 0.95
 	if fileSize > 50*1024 {
 		DebugPrint("The file size is greater than 50 KB, aggressive resizing will be performed.")
-		resizeFactor = 0.75
+		resizeFactor = 0.8
 	} else {
 		DebugPrint("The file size is less than 50 KB, lite resizing will be performed.")
 	}

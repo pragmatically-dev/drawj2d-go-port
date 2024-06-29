@@ -48,6 +48,12 @@ var sobelX = Kernel{Content: [][]float64{
 	{-1, 0, 1},
 }, Width: 3, Height: 3}
 
+var gaussianBlur = Kernel{Content: [][]float64{
+	{-1, -1, -1},
+	{-1, 8, -1},
+	{-1, -1, -1},
+}, Width: 3, Height: 3}
+
 // LaplacianKernel - constant type for differentiating Laplacian kernels
 type LaplacianKernel int
 
@@ -70,6 +76,7 @@ const (
 	K13
 	SobelY
 	SobelX
+	Gaussian
 )
 
 // LaplacianGray applies Laplacian filter to a grayscale image. The kernel types are: K4 and K8 (see LaplacianKernel)
@@ -93,6 +100,8 @@ func LaplacianGray(gray *image.Gray, border CBorder, kernel LaplacianKernel) (*i
 		laplacianKernel = sobelY
 	case SobelX:
 		laplacianKernel = sobelX
+	case Gaussian:
+		laplacianKernel = gaussianBlur
 	default:
 		return nil, errors.New("invalid kernel")
 	}

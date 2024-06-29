@@ -19,13 +19,13 @@ import (
 } */
 
 func TestPNGConversion(t *testing.T) {
-	rmData := LaplacianEdgeDetection("/home/nieva/Proyectos/drawj2d-rm/image.png", "/home/nieva/Proyectos/drawj2d-rm/")
+	rmData := LaplacianEdgeDetection("/home/nieva/Proyectos/drawj2d-rm/calendar-test.png", "/home/nieva/Proyectos/drawj2d-rm/")
 	if rmData == nil {
 		t.FailNow()
 	}
 
 	//fmt.Println("File testPNGConversion.rm generated successfully.")
-	rmFile := GetFileNameWithoutExtension("/home/nieva/Proyectos/drawj2d-rm/image.png")
+	rmFile := GetFileNameWithoutExtension("/home/nieva/Proyectos/drawj2d-rm/calendar-test.png")
 	rmFile = fmt.Sprintf("%s/%s.rm", "/home/nieva/Proyectos/drawj2d-rm/", rmFile)
 
 	zipData, zipName := CreateRmDoc(rmFile, "/home/nieva/Proyectos/drawj2d-rm/", rmData)
