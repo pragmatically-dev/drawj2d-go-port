@@ -4,6 +4,7 @@ This port is meant to be run on the remarkable tablet
 
 ##some performance improvements:
 
+(check raw view on github to see the images)
 #### before:
 ![alt text](remarkablepage/cpu.svg)
 
