@@ -25,32 +25,62 @@ func GetFileNameWithoutExtension(filePath string) string {
 	return strings.TrimSuffix(base, ext)
 }
 
+// DetectWhitePixels detects white pixels in a grayscale image and adds them to a reMarkable page
+func DrawLines(coordinates [][]float64, width, height float32) []byte {
+
+	page := NewReMarkablePage()
+
+	for _, line := range coordinates {
+		isLine := len(line) == 4
+
+		if isLine {
+			ln := page.AddLine()
+			ln.AddPoint(float32(line[0]), float32(line[1]))
+			ln.AddPoint(float32(line[2]), float32(line[3]))
+
+		}
+
+		if !isLine {
+			ln := page.AddLine()
+			ln.AddPoint(float32(line[0]), float32(line[1]))
+			ln.AddPoint(float32(line[0]-0.1), float32(line[1]))
+
+		}
+	}
+
+	return page.Export()
+}
+
 func BuildBooleanMatrix(img *image.Gray) [][]bool {
 	bounds := img.Bounds().Size()
 	width, height := bounds.X, bounds.Y
 
 	// Inicializar la matriz booleana con el tamaño adecuado
 	boolImgMap := make([][]bool, width)
+
 	for i := range boolImgMap {
 		boolImgMap[i] = make([]bool, height)
 	}
 
-	ParallelForEachPixel(bounds,
+	var wg sync.WaitGroup
 
-		func(x, y int) {
+	// self documented bruh
+	processRow := func(y int) {
+		defer wg.Done()
+		for x := 0; x < width; x++ {
 
-			// Get pixel color
-			originalColor := img.At(x, y)
+			boolImgMap[x][y] = img.GrayAt(x, y).Y > 0
 
-			// Convert to grayscale
-			r, _, _, _ := originalColor.RGBA()
-			grayValue := uint8(r >> 8)
+		}
+	}
 
-			// Si el valor de gris es mayor a 0, asignar true, sino false
-			boolImgMap[x][y] = grayValue > 0
-		},
-	)
+	// spawn go routines for each row
+	for y := 0; y < height; y++ {
+		wg.Add(1)
+		go processRow(y)
+	}
 
+	wg.Wait()
 	return boolImgMap
 }
 
@@ -83,6 +113,7 @@ func DetectWhitePixels(img *image.Gray, filename, dirToSave string) []byte {
 	return page.Export()
 
 }
+
 func LaplacianEdgeDetection(imagePath, dirToSave string) []byte {
 
 	fileInfo, err := os.Stat(imagePath)
@@ -107,9 +138,15 @@ func LaplacianEdgeDetection(imagePath, dirToSave string) []byte {
 		return nil
 	}
 
-	img, _ = ResizeGray(img, resizeFactor, resizeFactor, InterLinear)
 	laplacianGray, _ := LaplacianGray(img, CBorderReplicate, K8)
-	return DetectWhitePixels(laplacianGray, imagePath, dirToSave)
+
+	img, _ = ResizeGray(laplacianGray, resizeFactor, resizeFactor, InterLinear)
+
+	boolMap := BuildBooleanMatrix(img)
+	width, height := img.Bounds().Max.X, img.Bounds().Max.Y
+	horLines := GetHorizontalLines(boolMap, width, height)
+
+	return DrawLines(horLines, float32(width), float32(height))
 
 }
 

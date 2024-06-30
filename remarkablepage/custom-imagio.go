@@ -38,7 +38,6 @@ func DecodeToGray(path string) (*image.Gray, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	bounds := img.Bounds()
 	gray := image.NewGray(bounds)
 	draw.Draw(gray, bounds, img, bounds.Min, draw.Src)

@@ -11,5 +11,6 @@ require (
 
 require (
 	github.com/kr/text v0.2.0 // indirect
+	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 )

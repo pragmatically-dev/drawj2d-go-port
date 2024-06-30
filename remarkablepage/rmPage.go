@@ -69,7 +69,7 @@ func (page *ReMarkablePage) AddLine() *rmLine {
 
 	line := &rmLine{
 		pointList:     make([]*rmPoint, 0),
-		brushBaseSize: 1,
+		brushBaseSize: 2,
 		brushType:     17,
 	}
 	page.lines = append(page.lines, line)

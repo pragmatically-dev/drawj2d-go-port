@@ -36,18 +36,6 @@ var kernel13 = Kernel{Content: [][]float64{
 	{2, 2, 2},
 }, Width: 3, Height: 3}
 
-var sobelY = Kernel{Content: [][]float64{
-	{-1, -2, -1},
-	{0, 0, 0},
-	{1, 2, 1},
-}, Width: 3, Height: 3}
-
-var sobelX = Kernel{Content: [][]float64{
-	{-1, 0, 1},
-	{-2, 0, 2},
-	{-1, 0, 1},
-}, Width: 3, Height: 3}
-
 var gaussianBlur = Kernel{Content: [][]float64{
 	{-1, -1, -1},
 	{-1, 8, -1},
@@ -96,10 +84,7 @@ func LaplacianGray(gray *image.Gray, border CBorder, kernel LaplacianKernel) (*i
 		laplacianKernel = kernel9
 	case K13:
 		laplacianKernel = kernel13
-	case SobelY:
-		laplacianKernel = sobelY
-	case SobelX:
-		laplacianKernel = sobelX
+
 	case Gaussian:
 		laplacianKernel = gaussianBlur
 	default:
