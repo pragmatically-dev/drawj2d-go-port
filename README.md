@@ -11,10 +11,15 @@ This port is meant to be run on the remarkable tablet
 ## After:
 ![alt text](remarkablepage/bench/cpu-post-custom-lib.svg)
 
-#### a Custom version of a lib used for image proccesing:
-https://github.com/Ernyoke/Imger
-Portions of this software are copyright (c) 2018 Szilagyi Ervin.
 
 # THERE IS A LOT OF ROOM FOR IMPROVEMENT
 
+## Requirements:
+Same as https://github.com/pragmatically-dev/PNG2Rm-System/?tab=readme-ov-file#client-side-tablet
 
+
+
+#### A modified version of this lib is used for image proccesing:
+https://github.com/Ernyoke/Imger
+
+Portions of this software are copyright (c) 2018 Szilagyi Ervin.
