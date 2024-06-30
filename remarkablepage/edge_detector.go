@@ -12,8 +12,8 @@ import (
 
 const (
 	debug                   = false
-	LITE_RESIZE_FACTOR      = 0.80
-	AGRESSIVE_RESIZE_FACTOR = 0.70
+	LITE_RESIZE_FACTOR      = 0.95
+	AGRESSIVE_RESIZE_FACTOR = 0.85
 )
 
 func GetFileNameWithoutExtension(filePath string) string {
