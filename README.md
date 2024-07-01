@@ -12,12 +12,14 @@ This port is meant to be run on the remarkable tablet
 ![alt text](remarkablepage/bench/cpu-post-custom-lib.svg)
 
 
-# THERE IS A LOT OF ROOM FOR IMPROVEMENT
 
 ## Requirements:
-Same as https://github.com/pragmatically-dev/PNG2Rm-System/?tab=readme-ov-file#client-side-tablet
+- rm-hacks (enables screenshot feature): https://github.com/mb1986/rm-hacks
+
+- webinterface-onboot: https://github.com/rM-self-serve/webinterface-onboot 
 
 
+#### THERE IS A LOT OF ROOM FOR IMPROVEMENT
 
 #### A modified version of this lib is used for image proccesing:
 https://github.com/Ernyoke/Imger
