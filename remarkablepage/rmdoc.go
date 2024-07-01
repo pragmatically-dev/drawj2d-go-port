@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -19,16 +20,14 @@ type ReMarkableAPIrmdoc struct {
 	Metadata0rm      string `json:"metadata0rm"`
 	Rmdata           []byte `json:"-"`
 	Time             int64  `json:"time"`
-	dirToSave        string
 	internalBuffer   *bytes.Buffer
 }
 
 // NewReMarkableAPIrmdoc crea una nueva instancia de ReMarkableAPIrmdoc
-func NewReMarkableAPIrmdoc(zipfile, dirToSave string, rmdata []byte) *ReMarkableAPIrmdoc {
+func NewReMarkableAPIrmdoc(zipfile string, rmdata []byte) *ReMarkableAPIrmdoc {
 	rmdoc := &ReMarkableAPIrmdoc{
-		Rmdata:    rmdata,
-		Time:      time.Now().Unix(),
-		dirToSave: dirToSave,
+		Rmdata: rmdata,
+		Time:   time.Now().Unix(),
 	}
 	rmdoc.process(zipfile)
 	return rmdoc
@@ -48,10 +47,10 @@ func (rmdoc *ReMarkableAPIrmdoc) process(zipfile string) {
 	rmdoc.Content = rmdoc.createContent(pageID)
 	rmdoc.NotebookMetadata = rmdoc.createNotebookMetadata(visibleName)
 
-	rmdoc.writeZip(zipfile, notebookID, pageID)
+	rmdoc.writeZip(notebookID, pageID)
 }
 
-func (rmdoc *ReMarkableAPIrmdoc) writeZip(zipfile, notebookID, pageID string) {
+func (rmdoc *ReMarkableAPIrmdoc) writeZip(notebookID, pageID string) {
 	f := new(bytes.Buffer)
 
 	zipWriter := zip.NewWriter(f)
@@ -266,7 +265,7 @@ func (rmdoc *ReMarkableAPIrmdoc) createContent(pageID string) string {
 		Orientation:   "portrait",
 		PageCount:     1,
 		PageTags:      []struct{}{},
-		SizeInBytes:   "0",
+		SizeInBytes:   fmt.Sprint(len(rmdoc.Rmdata)),
 		Tags:          []struct{}{},
 		TextAlignment: "justify",
 		TextScale:     1,
@@ -310,7 +309,7 @@ func (rmdoc *ReMarkableAPIrmdoc) createNotebookMetadata(visibleName string) stri
 	return string(notebookMetadataJSON)
 }
 
-func CreateRmDoc(rmName, dirToSave string, rmData []byte) (*bytes.Buffer, string) {
+func CreateRmDoc(rmName string, rmData []byte) (*bytes.Buffer, string) {
 	var zipName string
 
 	if strings.HasSuffix(rmName, ".rm") {
@@ -321,7 +320,7 @@ func CreateRmDoc(rmName, dirToSave string, rmData []byte) (*bytes.Buffer, string
 
 	rmfiledata := rmData
 
-	rmdoc := NewReMarkableAPIrmdoc(zipName, dirToSave, rmfiledata)
+	rmdoc := NewReMarkableAPIrmdoc(zipName, rmfiledata)
 	DebugPrint("File " + zipName + " created successfully.")
 
 	return rmdoc.internalBuffer, zipName

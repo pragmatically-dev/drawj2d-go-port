@@ -17,24 +17,20 @@ import (
 	"github.com/fsnotify/fsnotify"
 	rp "github.com/pragmatically-dev/drawj2d-rm/remarkablepage"
 	_ "go.uber.org/automaxprocs"
-	"gopkg.in/yaml.v2"
 )
 
 // Config structure to hold YAML configuration
 type Config struct {
-	DirToSearch   string `yaml:"dir_to_search"`
-	DirToSave     string `yaml:"dir_to_save"`
-	FilePrefix    string `yaml:"file_prefix"`
-	ServerAddress string `yaml:"server_address"`
+	DirToSearch string `yaml:"dir_to_search"`
+	FilePrefix  string `yaml:"file_prefix"`
 }
 
 var httpClient = &http.Client{}
 
-func postRmDocToWebInterface(filepath, dirToSave string) {
-	rmData := rp.LaplacianEdgeDetection(filepath, dirToSave)
+func postRmDocToWebInterface(filepath string) {
+	rmData := rp.LaplacianEdgeDetection(filepath)
 	rmFile := rp.GetFileNameWithoutExtension(filepath)
-	rmFile = fmt.Sprintf("%s/%s.rm", dirToSave, rmFile)
-	rmDocBuff, rmDocPath := rp.CreateRmDoc(rmFile, dirToSave, rmData)
+	rmDocBuff, rmDocPath := rp.CreateRmDoc(rmFile, rmData)
 	if rmDocBuff == nil {
 		fmt.Println("Error al crear zip en memoria:")
 		return
@@ -84,7 +80,7 @@ func postRmDocToWebInterface(filepath, dirToSave string) {
 	}(rmDocPath, rmDocBuff)
 }
 
-func watchForScreenshots(dirToSearch, filePrefix, dirToSave string) {
+func watchForScreenshots(dirToSearch, filePrefix string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
@@ -116,7 +112,7 @@ func watchForScreenshots(dirToSearch, filePrefix, dirToSave string) {
 				//Wasted hours for trying to fix this: 15
 				time.Sleep(1200 * time.Millisecond)
 				rp.DebugPrint("Screenshot found: " + event.Name)
-				go postRmDocToWebInterface(event.Name, dirToSave)
+				go postRmDocToWebInterface(event.Name)
 			}
 
 		case err, ok := <-watcher.Errors:
@@ -133,19 +129,14 @@ func deleteFile(filepath string) error {
 }
 
 func AppStart() {
-	configFile, err := os.ReadFile("/home/root/.config/png2rm/config.yaml")
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	}
 
-	var config Config
-	err = yaml.Unmarshal(configFile, &config)
-	if err != nil {
-		log.Fatalf("error: %v", err)
+	config := &Config{
+		DirToSearch: "/home/root",
+		FilePrefix:  "Screenshot",
 	}
 
 	fmt.Println("<--- Looking for new Screenshots --->")
-	watchForScreenshots(config.DirToSearch, config.FilePrefix, config.DirToSave)
+	watchForScreenshots(config.DirToSearch, config.FilePrefix)
 }
 
 func main() {

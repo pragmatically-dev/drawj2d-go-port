@@ -7,13 +7,13 @@ import (
 )
 
 func TestBooleanMatrixBuilding(t *testing.T) {
-	img, err := DecodeToGray("/home/nieva/Proyectos/drawj2d-rm/image.png")
+	img, err := DecodeToGray("/home/nieva/Proyectos/drawj2d-rm/images/image.png")
 	if err != nil {
 		DebugPrint("Error opening the file:", err)
 		return
 	}
 
-	config, _ := DecodeAndConfig("/home/nieva/Proyectos/drawj2d-rm/image.png")
+	config, _ := DecodeAndConfig("/home/nieva/Proyectos/drawj2d-rm/images/image.png")
 	laplacianGray, _ := LaplacianGray(img, CBorderReplicate, K8)
 
 	boolMap := BuildBooleanMatrix(laplacianGray)
@@ -23,14 +23,14 @@ func TestBooleanMatrixBuilding(t *testing.T) {
 	rmFile = fmt.Sprintf("%s/%s.rm", "/home/nieva/Proyectos/drawj2d-rm/", rmFile)
 
 	rmRawData := DrawLines(horLines, float32(config.Width), float32(config.Height))
-	zipData, zipName := CreateRmDoc(rmFile, "/home/nieva/Proyectos/drawj2d-rm/", rmRawData)
+	zipData, zipName := CreateRmDoc(rmFile, rmRawData)
 
 	file, _ := os.Create(zipName)
 	zipData.WriteTo(file)
 }
 
 func TestPNGConversion(t *testing.T) {
-	rmData := LaplacianEdgeDetection("/home/nieva/Proyectos/drawj2d-rm/test-3-book.png", "/home/nieva/Proyectos/drawj2d-rm/")
+	rmData := LaplacianEdgeDetection("/home/nieva/Proyectos/drawj2d-rm/test-3-book.png")
 	if rmData == nil {
 		t.FailNow()
 	}
@@ -39,7 +39,7 @@ func TestPNGConversion(t *testing.T) {
 	rmFile := GetFileNameWithoutExtension("/home/nieva/Proyectos/drawj2d-rm/test-3-book.png")
 	rmFile = fmt.Sprintf("%s/%s.rm", "/home/nieva/Proyectos/drawj2d-rm/", rmFile)
 
-	zipData, zipName := CreateRmDoc(rmFile, "/home/nieva/Proyectos/drawj2d-rm/", rmData)
+	zipData, zipName := CreateRmDoc(rmFile, rmData)
 
 	file, _ := os.Create(zipName)
 	zipData.WriteTo(file)
@@ -96,7 +96,7 @@ func TestDrawingPixel(t *testing.T) {
 	}
 
 	rawData := page.Export()
-	zipData, zipName := CreateRmDoc(rmFile, "/home/nieva/Proyectos/drawj2d-rm/", rawData)
+	zipData, zipName := CreateRmDoc(rmFile, rawData)
 	file, _ := os.Create(zipName)
 	zipData.WriteTo(file)
 

@@ -6,14 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-
-	"os"
 )
 
 const (
-	debug                   = false
-	LITE_RESIZE_FACTOR      = 0.95
-	AGRESSIVE_RESIZE_FACTOR = 0.85
+	debug = false
 )
 
 func GetFileNameWithoutExtension(filePath string) string {
@@ -114,23 +110,7 @@ func DetectWhitePixels(img *image.Gray, filename, dirToSave string) []byte {
 
 }
 
-func LaplacianEdgeDetection(imagePath, dirToSave string) []byte {
-
-	fileInfo, err := os.Stat(imagePath)
-	if err != nil {
-		DebugPrint("Error getting file information:", err)
-		return nil
-	}
-
-	fileSize := fileInfo.Size()
-
-	resizeFactor := LITE_RESIZE_FACTOR
-	if fileSize > 50*1024 {
-		DebugPrint("The file size is greater than 50 KB, aggressive resizing will be performed.")
-		resizeFactor = AGRESSIVE_RESIZE_FACTOR
-	} else {
-		DebugPrint("The file size is less than 50 KB, lite resizing will be performed.")
-	}
+func LaplacianEdgeDetection(imagePath string) []byte {
 
 	img, err := DecodeToGray(imagePath)
 	if err != nil {
@@ -138,13 +118,10 @@ func LaplacianEdgeDetection(imagePath, dirToSave string) []byte {
 		return nil
 	}
 
-	laplacianGray, _ := LaplacianGray(img, CBorderReplicate, K8)
+	img, _ = LaplacianGray(img, CBorderReplicate, K8)
 
-	img, _ = ResizeGray(laplacianGray, resizeFactor, resizeFactor, InterLinear)
-
-	boolMap := BuildBooleanMatrix(img)
 	width, height := img.Bounds().Max.X, img.Bounds().Max.Y
-	horLines := GetHorizontalLines(boolMap, width, height)
+	horLines := GetHorizontalLines(BuildBooleanMatrix(img), width, height)
 
 	return DrawLines(horLines, float32(width), float32(height))
 
