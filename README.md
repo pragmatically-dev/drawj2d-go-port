@@ -2,14 +2,6 @@
 
 This port is meant to be run on the remarkable tablet 
 
-## some performance improvements:
-
-(check raw view on github to see the images)
-#### before:
-![alt text](remarkablepage/bench/cpu.svg)
-
-## After:
-![alt text](remarkablepage/bench/cpu-post-custom-lib.svg)
 
 
 
@@ -19,7 +11,17 @@ This port is meant to be run on the remarkable tablet
 - webinterface-onboot: https://github.com/rM-self-serve/webinterface-onboot 
 
 
-#### THERE IS A LOT OF ROOM FOR IMPROVEMENT
+#### THERE IS A LOT OF ROOM FOR FURTHER IMPROVEMENT
+
+## some performance improvements:
+
+(check raw view on github to see the images)
+#### before:
+![alt text](remarkablepage/bench/cpu.svg)
+
+## After:
+![alt text](remarkablepage/bench/cpu-post-custom-lib.svg)
+
 
 #### A modified version of this lib is used for image proccesing:
 https://github.com/Ernyoke/Imger
