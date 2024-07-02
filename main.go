@@ -37,7 +37,6 @@ func postRmDocToWebInterface(filepath string) {
 	}
 
 	go func(rmDocPath string, rmdocbuff *bytes.Buffer) {
-		defer deleteFile(rmDocPath)
 		defer deleteFile(filepath)
 		defer runtime.GC()
 

@@ -118,7 +118,8 @@ func LaplacianEdgeDetection(imagePath string) []byte {
 		return nil
 	}
 
-	img, _ = LaplacianGray(img, CBorderReplicate, K8)
+	blur, _ := LaplacianGray(img, CBorderReplicate, Gaussian)
+	img, _ = LaplacianGray(blur, CBorderReplicate, K8)
 
 	width, height := img.Bounds().Max.X, img.Bounds().Max.Y
 	horLines := GetHorizontalLines(BuildBooleanMatrix(img), width, height)

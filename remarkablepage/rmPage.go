@@ -68,9 +68,12 @@ func (page *ReMarkablePage) AddLine() *rmLine {
 	defer page.mu.Unlock()
 
 	line := &rmLine{
-		pointList:     make([]*rmPoint, 0),
-		brushBaseSize: 2,
-		brushType:     17,
+		pointList:            make([]*rmPoint, 0),
+		brushBaseSize:        2,
+		brushType:            17,
+		padding:              0.0,
+		color:                0,
+		unknownLineAttribute: 0.0,
 	}
 	page.lines = append(page.lines, line)
 	if page.debug {
@@ -87,7 +90,7 @@ func (line *rmLine) AddPoint(x, y float32) {
 		y:         y,
 		speed:     0.1,
 		direction: 0,
-		width:     2,
+		width:     1.9,
 		pressure:  1.0,
 	}
 	line.pointList = append(line.pointList, point)
@@ -126,8 +129,11 @@ func (page *ReMarkablePage) writeLayer() {
 
 	// Write each line
 	for _, line := range page.lines {
+
 		page.writeLine(line)
+
 	}
+
 }
 
 // writeLine writes a line and its points to the output file

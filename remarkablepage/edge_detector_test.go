@@ -7,19 +7,20 @@ import (
 )
 
 func TestBooleanMatrixBuilding(t *testing.T) {
-	img, err := DecodeToGray("/home/nieva/Proyectos/drawj2d-rm/images/image.png")
+	imgpath := "/home/nieva/Proyectos/drawj2d-rm/images/image.png"
+	img, err := DecodeToGray(imgpath)
 	if err != nil {
 		DebugPrint("Error opening the file:", err)
 		return
 	}
-
-	config, _ := DecodeAndConfig("/home/nieva/Proyectos/drawj2d-rm/images/image.png")
-	laplacianGray, _ := LaplacianGray(img, CBorderReplicate, K8)
+	config, _ := DecodeAndConfig(imgpath)
+	laplacianGray, _ := LaplacianGray(img, CBorderReplicate, Gaussian)
+	laplacianGray, _ = LaplacianGray(laplacianGray, CBorderReplicate, K4)
 
 	boolMap := BuildBooleanMatrix(laplacianGray)
 	horLines := GetHorizontalLines(boolMap, config.Width, config.Height)
 
-	rmFile := GetFileNameWithoutExtension("/home/nieva/Proyectos/drawj2d-rm/image.png")
+	rmFile := GetFileNameWithoutExtension(imgpath)
 	rmFile = fmt.Sprintf("%s/%s.rm", "/home/nieva/Proyectos/drawj2d-rm/", rmFile)
 
 	rmRawData := DrawLines(horLines, float32(config.Width), float32(config.Height))
