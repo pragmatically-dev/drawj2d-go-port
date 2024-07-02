@@ -5,7 +5,6 @@ import (
 	"image"
 	"path/filepath"
 	"strings"
-	"sync"
 )
 
 const (
@@ -47,7 +46,7 @@ func DrawLines(coordinates [][]float64, width, height float32) []byte {
 	return page.Export()
 }
 
-func BuildBooleanMatrix(img *image.Gray) [][]bool {
+/* func BuildBooleanMatrix(img *image.Gray) [][]bool {
 	bounds := img.Bounds().Size()
 	width, height := bounds.X, bounds.Y
 
@@ -79,35 +78,24 @@ func BuildBooleanMatrix(img *image.Gray) [][]bool {
 	wg.Wait()
 	return boolImgMap
 }
+*/
 
-// DetectWhitePixels detects white pixels in a grayscale image and adds them to a reMarkable page
-func DetectWhitePixels(img *image.Gray, filename, dirToSave string) []byte {
+func BuildBooleanMatrix(img *image.Gray) [][]bool {
+	bounds := img.Bounds().Size()
+	width, height := bounds.X, bounds.Y
 
-	page := NewReMarkablePage()
+	boolImgMap := make([][]bool, width)
+	for i := range boolImgMap {
+		boolImgMap[i] = make([]bool, height)
+	}
 
-	size := img.Bounds().Max
-	var wg sync.WaitGroup
-
-	// self documented bruh
-	processRow := func(y int) {
-		defer wg.Done()
-		for x := 0; x < size.X; x++ {
-			if img.GrayAt(x, y).Y > 0 {
-				page.AddPixel(float32(x), float32(y))
-			}
+	for i := 0; i < width; i++ {
+		for j := 0; j < height; j++ {
+			boolImgMap[i][j] = img.GrayAt(i, j).Y > 0
 		}
 	}
 
-	// spawn go routines for each row
-	for y := 0; y < size.Y; y++ {
-		wg.Add(1)
-		go processRow(y)
-	}
-
-	wg.Wait()
-
-	return page.Export()
-
+	return boolImgMap
 }
 
 func LaplacianEdgeDetection(imagePath string) []byte {

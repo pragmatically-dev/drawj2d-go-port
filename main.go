@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/fsnotify/fsnotify"
-	rp "github.com/pragmatically-dev/drawj2d-rm/remarkablepage"
+	rp "github.com/pragmatically-dev/PoC-drawj2d-port-go/remarkablepage"
 	_ "go.uber.org/automaxprocs"
 )
 

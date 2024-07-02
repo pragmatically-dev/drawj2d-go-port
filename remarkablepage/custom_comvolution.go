@@ -3,6 +3,7 @@ package remarkablepage
 import (
 	"image"
 	"image/color"
+	"runtime"
 	"sync"
 )
 
@@ -25,7 +26,7 @@ const MinUint16 = 0
 //
 // Note: the anchor represents a point inside the area of the kernel. After every step of the convolution, the position
 // specified by the anchor point gets updated on the result image.
-func ConvolveGray(img *image.Gray, kernel *Kernel, anchor image.Point, border CBorder) (*image.Gray, error) {
+/* func ConvolveGray(img *image.Gray, kernel *Kernel, anchor image.Point, border CBorder) (*image.Gray, error) {
 	kernelSize := kernel.Size()
 	padded, err := PaddingGray(img, kernelSize, anchor, border)
 	if err != nil {
@@ -54,6 +55,49 @@ func ConvolveGray(img *image.Gray, kernel *Kernel, anchor image.Point, border CB
 				resultImage.Set(x, y, color.Gray{uint8(sum)})
 			}
 		}(y)
+	}
+
+	wg.Wait()
+	return resultImage, nil
+} */
+func ConvolveGray(img *image.Gray, kernel *Kernel, anchor image.Point, border CBorder) (*image.Gray, error) {
+	kernelSize := kernel.Size()
+	padded, err := PaddingGray(img, kernelSize, anchor, border)
+	if err != nil {
+		return nil, err
+	}
+	originalSize := img.Bounds().Size()
+	resultImage := image.NewGray(img.Bounds())
+
+	numGoroutines := runtime.NumCPU() // Mejor usar el número de núcleos disponibles
+	var wg sync.WaitGroup
+	rowsPerGoroutine := originalSize.Y / numGoroutines
+
+	for g := 0; g < numGoroutines; g++ {
+		wg.Add(1)
+		startY := g * rowsPerGoroutine
+		endY := startY + rowsPerGoroutine
+		if g == numGoroutines-1 {
+			endY = originalSize.Y // Última goroutine procesa cualquier fila restante
+		}
+
+		go func(startY, endY int) {
+			defer wg.Done()
+			for y := startY; y < endY; y++ {
+				for x := 0; x < originalSize.X; x++ {
+					sum := float64(0)
+					for ky := 0; ky < kernelSize.Y; ky++ {
+						for kx := 0; kx < kernelSize.X; kx++ {
+							pixel := padded.GrayAt(x+kx, y+ky)
+							kE := kernel.At(kx, ky)
+							sum += float64(pixel.Y) * kE
+						}
+					}
+					sum = ClampF64(sum, MinUint8, float64(MaxUint8))
+					resultImage.Set(x, y, color.Gray{uint8(sum)})
+				}
+			}
+		}(startY, endY)
 	}
 
 	wg.Wait()

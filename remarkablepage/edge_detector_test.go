@@ -1,35 +1,24 @@
 package remarkablepage
 
 import (
-	"fmt"
 	"os"
+	"runtime"
 	"testing"
 )
 
 func TestBooleanMatrixBuilding(t *testing.T) {
+	
+	t.Log(runtime.NumGoroutine())
 	imgpath := "/home/nieva/Proyectos/drawj2d-rm/images/image.png"
-	img, err := DecodeToGray(imgpath)
-	if err != nil {
-		DebugPrint("Error opening the file:", err)
-		return
-	}
-	config, _ := DecodeAndConfig(imgpath)
-	laplacianGray, _ := LaplacianGray(img, CBorderReplicate, Gaussian)
-	laplacianGray, _ = LaplacianGray(laplacianGray, CBorderReplicate, K4)
 
-	boolMap := BuildBooleanMatrix(laplacianGray)
-	horLines := GetHorizontalLines(boolMap, config.Width, config.Height)
-
-	rmFile := GetFileNameWithoutExtension(imgpath)
-	rmFile = fmt.Sprintf("%s/%s.rm", "/home/nieva/Proyectos/drawj2d-rm/", rmFile)
-
-	rmRawData := DrawLines(horLines, float32(config.Width), float32(config.Height))
-	zipData, zipName := CreateRmDoc(rmFile, rmRawData)
+	rmRawData := LaplacianEdgeDetection(imgpath)
+	zipData, zipName := CreateRmDoc("/home/nieva/Proyectos/drawj2d-rm/TestBooleanMatrix", rmRawData)
 
 	file, _ := os.Create(zipName)
 	zipData.WriteTo(file)
 }
 
+/*
 func TestPNGConversion(t *testing.T) {
 	rmData := LaplacianEdgeDetection("/home/nieva/Proyectos/drawj2d-rm/test-3-book.png")
 	if rmData == nil {
@@ -103,3 +92,4 @@ func TestDrawingPixel(t *testing.T) {
 
 	fmt.Println("File testRemarkablePageSmiley.rm generated successfully.")
 }
+*/
