@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"image/color"
-	"math"
 	"sync"
 )
 
@@ -177,18 +176,18 @@ func (page *ReMarkablePage) transformPoint(x, y float32) (float32, float32) {
 	return x, page.pageHeight - y
 }
 
-// DrawCircle draws a circle on the page
-func (page *ReMarkablePage) DrawCircle(centerX, centerY, radius float32) {
-	line := page.AddLine()
-	numSegments := 360
-	for i := 0; i <= numSegments; i++ {
-		theta := float64(i) * 2.0 * math.Pi / float64(numSegments)
-		x := centerX + radius*float32(math.Cos(theta))
-		y := centerY + radius*float32(math.Sin(theta))
-		//tx, ty := page.transformPoint(x, y)
-		line.AddPoint(x, y)
-	}
-}
+// // DrawCircle draws a circle on the page
+// func (page *ReMarkablePage) DrawCircle(centerX, centerY, radius float32) {
+// 	line := page.AddLine()
+// 	numSegments := 360
+// 	for i := 0; i <= numSegments; i++ {
+// 		theta := float32(i) * 2.0 * math.Pi / float32(numSegments)
+// 		x := centerX + radius*float32(math.Cos(theta))
+// 		y := centerY + radius*float32(math.Sin(theta))
+// 		//tx, ty := page.transformPoint(x, y)
+// 		line.AddPoint(x, y)
+// 	}
+// }
 
 // DrawBezierCurve draws a Bezier curve on the page
 func (page *ReMarkablePage) DrawBezierCurve(p0, p1, p2, p3 rmPoint) {

@@ -7,9 +7,9 @@ import (
 )
 
 func TestBooleanMatrixBuilding(t *testing.T) {
-	
+
 	t.Log(runtime.NumGoroutine())
-	imgpath := "/home/nieva/Proyectos/drawj2d-rm/images/image.png"
+	imgpath := "/home/nieva/Proyectos/PoC-drawj2d-port-go/images/Screenshot.png"
 
 	rmRawData := LaplacianEdgeDetection(imgpath)
 	zipData, zipName := CreateRmDoc("/home/nieva/Proyectos/drawj2d-rm/TestBooleanMatrix", rmRawData)
