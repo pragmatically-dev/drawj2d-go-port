@@ -13,7 +13,20 @@ This port is meant to be run on the remarkable tablet a Golang + C implementatio
 
 - webinterface-onboot: https://github.com/rM-self-serve/webinterface-onboot 
 
-- copy the binary to your device and run it on the background with & 
+
+⚠️ Please be sure to have rm-hacks and webinterface-onboot Installed⚠️
 
 
+1. **Transfrer the client installer tar to the remarkable:**
 
+   then:
+   - 
+   ```bash
+   $remarkable: ~/ tar -xvf drawj2d-rm.tar
+   $remarkable: ~/ cd drawj2d-rm
+   $remarkable: ~/ ./install.sh
+
+   ```
+---
+
+Now you should be able to convert your screenshots to rmlines in 3 sec
