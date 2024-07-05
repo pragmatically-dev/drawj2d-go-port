@@ -109,7 +109,7 @@ func watchForScreenshots(dirToSearch, filePrefix string) {
 			if isNewFile(event) && doesItContainPrefix(event) {
 				//DO NOT REMOVE: The remarkable takes 1200ms to save the png to /home/root
 				//Wasted hours for trying to fix this: 15
-				time.Sleep(1200 * time.Millisecond)
+				time.Sleep(1100 * time.Millisecond)
 				rp.DebugPrint("Screenshot found: " + event.Name)
 				go postRmDocToWebInterface(event.Name)
 			}

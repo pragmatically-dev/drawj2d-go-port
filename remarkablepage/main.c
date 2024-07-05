@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <omp.h>
 
+
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image.h"
@@ -39,8 +40,7 @@ LineList handle_new_file(const char *directory, const char *filename)
     {
         char filepath[PATH_MAX];
         snprintf(filepath, PATH_MAX, "%s/%s", directory, filename);
-        printf("New file detected: %s\n", filepath);
-
+       
         int width, height, channels;
         unsigned char *image = stbi_load(filepath, &width, &height, &channels, STBI_grey); // Load as grayscale (1 channel)
         if (!image)
@@ -165,6 +165,7 @@ void apply_laplace_filter(unsigned char *image, unsigned char *output, int width
     }
 }
 
+
 bool **build_boolean_matrix(unsigned char *image, int width, int height)
 {
     bool **bool_img_map = (bool **)malloc(width * sizeof(bool *));
@@ -270,9 +271,9 @@ LineList GetHorizontalLines(bool **pointMatrix, int imageWidth, int imageHeight)
             horizontalLines[horizontalLinesSize++] = startPoint.y;
             horizontalLines[horizontalLinesSize++] = endPoint.x;
             horizontalLines[horizontalLinesSize++] = endPoint.y;
-             //printf("Line %d: (%.2f, %.2f) to (%.2f, %.2f)\n",
-                //    i,
-                  //  startPoint.x,startPoint.y,endPoint.x,endPoint.y );
+           //  printf("Line %d: (%.2f, %.2f) to (%.2f, %.2f)\n",
+             //       i,
+               //     startPoint.x,startPoint.y,endPoint.x,endPoint.y );
         
         }
         else
@@ -281,7 +282,7 @@ LineList GetHorizontalLines(bool **pointMatrix, int imageWidth, int imageHeight)
             horizontalLines[horizontalLinesSize++] = startPoint.y;
             horizontalLines[horizontalLinesSize++] = startPoint.x;
             horizontalLines[horizontalLinesSize++] = startPoint.y;
-            //printf("POINT %d: (%.2f, %.2f) \n",i,startPoint.x,startPoint.y );
+           // printf("POINT %d: (%.2f, %.2f) \n",i,startPoint.x,startPoint.y );
         } 
     }
 

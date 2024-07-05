@@ -1,8 +1,8 @@
 package remarkablepage
 
 /*
-#cgo CFLAGS: -I.
-#cgo LDFLAGS: -L. -limage_processing -lm -lpthread -fopenmp
+#cgo CFLAGS: -I. -ffast-math
+#cgo LDFLAGS: -L. -limage_processing -lm -lpthread -fopenmp -O3 -mfpu=neon -march=armv7-a
 #include "image_processing.h"
 #include <stdlib.h>
 */
