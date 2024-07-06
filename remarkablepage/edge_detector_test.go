@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-
 func TestBooleanMatrixBuilding(t *testing.T) {
 
 	t.Log(runtime.NumGoroutine())

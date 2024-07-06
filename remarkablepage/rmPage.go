@@ -113,7 +113,8 @@ func (page *ReMarkablePage) Export() []byte {
 
 	// Write the layers
 	page.writeLayer()
-
+	page.lines = nil
+	page.colors = nil
 	return page.out
 }
 
@@ -133,6 +134,7 @@ func (page *ReMarkablePage) writeLayer() {
 
 	}
 
+	buf = nil
 }
 
 // writeLine writes a line and its points to the output file
@@ -155,6 +157,7 @@ func (page *ReMarkablePage) writeLine(line *rmLine) {
 	for _, point := range line.pointList {
 		page.writePoint(point)
 	}
+	buf = nil
 }
 
 // writePoint writes a point to the output file
@@ -169,6 +172,8 @@ func (page *ReMarkablePage) writePoint(point *rmPoint) {
 	binary.Write(buf, binary.LittleEndian, point.width)
 	binary.Write(buf, binary.LittleEndian, point.pressure)
 	page.out = append(page.out, buf.Bytes()...)
+
+	buf = nil
 }
 
 // transformPoint transforms a point to the new coordinate system

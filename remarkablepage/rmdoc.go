@@ -90,6 +90,7 @@ func (rmdoc *ReMarkableAPIrmdoc) writeZip(notebookID, pageID string) {
 	}
 
 	rmdoc.internalBuffer = f
+
 }
 
 func (rmdoc *ReMarkableAPIrmdoc) createContent(pageID string) string {
@@ -322,6 +323,10 @@ func CreateRmDoc(rmName string, rmData []byte) (*bytes.Buffer, string) {
 
 	rmdoc := NewReMarkableAPIrmdoc(zipName, rmfiledata)
 	DebugPrint("File " + zipName + " created successfully.")
+	rmdoc.Rmdata = nil
+	rmdoc.Content = ""
+	rmdoc.Metadata0rm = ""
+	rmdoc.NotebookMetadata = ""
 
 	return rmdoc.internalBuffer, zipName
 }
