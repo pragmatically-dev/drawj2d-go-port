@@ -58,7 +58,9 @@ LineList handle_new_file(const char *directory, const char *filename)
             return horizontalLines;
         }
 
+        
         apply_gaussian_blur(image, width, height);
+
         apply_laplace_filter(image, output, width, height);
 
         bool **bool_matrix = build_boolean_matrix(output, width, height);

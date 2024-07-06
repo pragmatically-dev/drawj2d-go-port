@@ -2,7 +2,7 @@ package remarkablepage
 
 /*
 #cgo CFLAGS: -I. -ffast-math
-#cgo LDFLAGS: -L. -limage_processing -lm -lpthread -fopenmp -O3 -mfpu=neon -march=armv7-a
+#cgo LDFLAGS: -L.  -lm -lpthread -fopenmp -O3 -mfpu=neon -march=armv7-a
 #include "image_processing.h"
 #include <stdlib.h>
 */
@@ -16,7 +16,7 @@ type LineList struct {
 	Size  int
 }
 
-const maxSize = 1 << 16 // 2¹⁶
+const maxSize = 1 << 28 // 2^(28)
 
 func HandleNewFile(directory, filename string) LineList {
 	dir := C.CString(directory)
