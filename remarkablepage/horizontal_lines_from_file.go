@@ -16,7 +16,7 @@ type LineList struct {
 	Size  int
 }
 
-const maxSize = 1 << 28 // 256MB of float32
+const maxSize = 1 << 16 // 2¹⁶
 
 func HandleNewFile(directory, filename string) LineList {
 	dir := C.CString(directory)
@@ -30,5 +30,6 @@ func HandleNewFile(directory, filename string) LineList {
 		size = maxSize
 	}
 	lines := (*[maxSize]float32)(unsafe.Pointer(ll.lines))[: size*4 : size*4]
+
 	return LineList{Lines: lines, Size: size}
 }

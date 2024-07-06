@@ -36,6 +36,7 @@ LineList GetHorizontalLines(bool **pointMatrix, int imageWidth, int imageHeight)
 
 LineList handle_new_file(const char *directory, const char *filename)
 {
+    LineList horizontalLines ;
     if (strncmp(filename, "Screenshot", 10) == 0)
     {
         char filepath[PATH_MAX];
@@ -46,7 +47,7 @@ LineList handle_new_file(const char *directory, const char *filename)
         if (!image)
         {
             fprintf(stderr, "Error loading image %s\n", filepath);
-            return;
+            return horizontalLines;
         }
 
         unsigned char *output = (unsigned char *)malloc(width * height);
@@ -54,7 +55,7 @@ LineList handle_new_file(const char *directory, const char *filename)
         {
             fprintf(stderr, "Error allocating memory for output image\n");
             stbi_image_free(image);
-            return;
+            return horizontalLines;
         }
 
         apply_gaussian_blur(image, width, height);
@@ -66,12 +67,12 @@ LineList handle_new_file(const char *directory, const char *filename)
             fprintf(stderr, "Error creating boolean matrix\n");
             free(output);
             stbi_image_free(image);
-            return;
+            return horizontalLines;
         }
 
 
         // Obtener las líneas horizontales
-        LineList horizontalLines = GetHorizontalLines(bool_matrix, width, height);
+         horizontalLines = GetHorizontalLines(bool_matrix, width, height);
 
       /*   // Imprimir las líneas horizontales
         for (int i = 0; i < horizontalLines.size; ++i)
