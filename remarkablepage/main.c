@@ -31,6 +31,7 @@ void apply_gaussian_blur(unsigned char *image, int width, int height);
 void apply_laplace_filter(unsigned char *image, unsigned char *output, int width, int height);
 bool **build_boolean_matrix(unsigned char *image, int width, int height);
 LineList GetHorizontalLines(bool **pointMatrix, int imageWidth, int imageHeight);
+void free_line_list(LineList *lineList);
 
 
 
@@ -295,4 +296,15 @@ LineList GetHorizontalLines(bool **pointMatrix, int imageWidth, int imageHeight)
     result.lines = horizontalLines;
     result.size = horizontalLinesSize / 4;
     return result;
+}
+
+
+void free_line_list(LineList *lineList)
+{
+    if (lineList->lines != NULL)
+    {
+        free(lineList->lines);
+        lineList->lines = NULL;
+        lineList->size = 0;
+    }
 }

@@ -11,5 +11,6 @@ typedef struct {
 } LineList;
 
 LineList handle_new_file(const char *directory, const char *filename);
+void free_line_list(LineList *lineList);
 
 #endif
