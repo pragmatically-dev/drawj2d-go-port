@@ -105,7 +105,9 @@ func watchForScreenshots(dirToSearch, filePrefix string) {
 			if !ok {
 				return
 			}
-
+			if event.Has(fsnotify.Chmod) || event.Has(fsnotify.Create) {
+				fmt.Println(event.Name)
+			}
 			if isNewFile(event) && doesItContainPrefix(event) {
 				//DO NOT REMOVE: The remarkable takes 1200ms to save the png to /home/root
 				//Wasted hours for trying to fix this: 15
@@ -135,7 +137,9 @@ func AppStart() {
 	}
 
 	fmt.Println("<--- Looking for new Screenshots --->")
+	//go watchForScreenshots("/home/root/.local/share/remarkable/xochitl", config.FilePrefix)
 	watchForScreenshots(config.DirToSearch, config.FilePrefix)
+
 }
 
 func main() {

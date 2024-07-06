@@ -23,8 +23,9 @@ func HandleNewFile(directory, filename string) LineList {
 	file := C.CString(filename)
 	defer C.free(unsafe.Pointer(dir))
 	defer C.free(unsafe.Pointer(file))
-
 	ll := C.handle_new_file(dir, file)
+	defer C.free(unsafe.Pointer(ll.lines))
+
 	size := int(ll.size)
 	if size > maxSize {
 		size = maxSize
