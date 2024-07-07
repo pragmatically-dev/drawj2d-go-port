@@ -31,3 +31,6 @@ This port is meant to be run on the remarkable tablet a Golang + C implementatio
 
 Now you should be able to convert your screenshots to rmlines in 3 sec
 
+## Benchmark:
+
+![alt text](remarkablepage/bench/cpu-new-bench-CPROCESSING.prof.svg)
