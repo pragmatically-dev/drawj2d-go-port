@@ -33,4 +33,4 @@ Now you should be able to convert your screenshots to rmlines in 3 sec
 
 ## Benchmark:
 
-![alt text](remarkablepage/bench/cpu-new-bench-CPROCESSING.prof.svg)
+<img src="remarkablepage/bench/cpu-new-bench-CPROCESSING.prof.svg" alt="Benchmark" width="800" height="800">
