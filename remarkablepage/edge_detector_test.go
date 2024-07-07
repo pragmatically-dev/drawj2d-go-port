@@ -2,17 +2,15 @@ package remarkablepage
 
 import (
 	"os"
-	"runtime"
 	"testing"
 )
 
 func TestBooleanMatrixBuilding(t *testing.T) {
 
-	t.Log(runtime.NumGoroutine())
 	imgpath := "/home/nieva/Proyectos/PoC-drawj2d-port-go/images/Screenshot.png"
 
 	rmRawData := LaplacianEdgeDetection(imgpath)
-	zipData, zipName := CreateRmDoc("/home/nieva/Proyectos/drawj2d-rm/TestBooleanMatrix", rmRawData)
+	zipData, zipName := CreateRmDoc("/home/nieva/Proyectos/PoC-drawj2d-port-go/TestBooleanMatrix", rmRawData)
 
 	file, _ := os.Create(zipName)
 	zipData.WriteTo(file)
