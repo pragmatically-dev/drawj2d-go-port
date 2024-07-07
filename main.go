@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -25,7 +24,16 @@ type Config struct {
 	FilePrefix  string `yaml:"file_prefix"`
 }
 
-var httpClient = &http.Client{}
+var httpClient = &http.Client{
+	Timeout: time.Second * 30,
+	Transport: &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    90 * time.Second,
+		DisableCompression: true,
+		WriteBufferSize:    1 << 21,
+		ReadBufferSize:     1 << 21,
+	},
+}
 
 func postRmDocToWebInterface(filepath string) {
 	rmData := rp.LaplacianEdgeDetection(filepath)
@@ -50,11 +58,8 @@ func postRmDocToWebInterface(filepath string) {
 			return
 		}
 
-		_, err = io.Copy(part, rmdocbuff)
-		if err != nil {
-			fmt.Println("Error copying the file content:", err)
-			return
-		}
+		part.Write(rmdocbuff.Bytes())
+	
 
 		err = writer.Close()
 		if err != nil {
