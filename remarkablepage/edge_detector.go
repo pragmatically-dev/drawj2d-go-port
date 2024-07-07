@@ -40,8 +40,8 @@ func DrawLines(lines *LineList, width, height float32) []byte {
 			ln.AddPoint(p3, p4)
 
 		} else {
-
-			page.AddPixel(p1, p2)
+			ln := page.AddLine()
+			ln.AddPoint(p1, p2)
 
 		}
 
