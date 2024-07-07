@@ -95,7 +95,6 @@ LineList handle_new_file(const char *directory, const char *filename)
         }
         free(bool_matrix);
         free(output);
-        //free(horizontalLines.lines);
         stbi_image_free(image);
         return horizontalLines;
     }

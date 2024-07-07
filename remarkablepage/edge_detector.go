@@ -21,14 +21,14 @@ func GetFileNameWithoutExtension(filePath string) string {
 }
 
 // DetectWhitePixels detects white pixels in a grayscale image and adds them to a reMarkable page
-func DrawLines(lines *LineList, width, height float32) []byte {
+func DrawLines(lines LineList, width, height float32) []byte {
 
 	page := NewReMarkablePage()
 	defer func() {
 		page = nil
 		lines.Lines = nil
 		lines.Size = 0
-		lines = nil
+		lines = LineList{}
 	}()
 	for i := 0; i < lines.Size; i++ {
 

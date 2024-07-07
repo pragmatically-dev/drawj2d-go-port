@@ -59,7 +59,6 @@ func postRmDocToWebInterface(filepath string) {
 		}
 
 		part.Write(rmdocbuff.Bytes())
-	
 
 		err = writer.Close()
 		if err != nil {

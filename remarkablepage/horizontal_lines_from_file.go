@@ -18,18 +18,24 @@ type LineList struct {
 
 const maxSize = 1 << 28 // 2^(28)
 
-func HandleNewFile(directory, filename string) *LineList {
+func HandleNewFile(directory, filename string) LineList {
 	dir := C.CString(directory)
 	file := C.CString(filename)
 	defer C.free(unsafe.Pointer(dir))
 	defer C.free(unsafe.Pointer(file))
+
+	// Ensure ll is properly allocated and not moved by GC
 	ll := C.handle_new_file(dir, file)
+	defer C.free(unsafe.Pointer(ll.lines))
 
 	size := int(ll.size)
 	if size > maxSize {
 		size = maxSize
 	}
-	lines := (*[maxSize]float32)(unsafe.Pointer(ll.lines))[: size*4 : size*4]
 
-	return &LineList{Lines: lines, Size: size}
+	// Ensure ll.lines is properly pinned
+	lines := make([]float32, size*4)
+	copy(lines, (*[maxSize]float32)(unsafe.Pointer(ll.lines))[:size*4:size*4])
+
+	return LineList{Lines: lines, Size: size}
 }
