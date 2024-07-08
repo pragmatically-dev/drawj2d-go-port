@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"log"
@@ -35,52 +36,100 @@ var httpClient = &http.Client{
 	},
 }
 
-func postRmDocToWebInterface(filepath string) {
+func isMultipleModeActive() bool {
+	var configText string
+	// Open the file
+	file, err := os.Open("/home/root/.config/remarkable/xochitl.conf")
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return false
+	}
+	defer file.Close()
+
+	// Create a new scanner for the file
+	scanner := bufio.NewScanner(file)
+
+	// Read and skip the first two lines
+	for i := 0; i < 2; i++ {
+		if !scanner.Scan() {
+			fmt.Println("The file has less than 3 lines.")
+			return false
+		}
+	}
+
+	// Read the third line
+	if scanner.Scan() {
+		configText = scanner.Text()
+	} else {
+		fmt.Println("The file has less than 3 lines.")
+	}
+
+	// Check for errors during scanning
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading file:", err)
+	}
+
+	configText = strings.Split(configText, "=")[0]
+
+	return configText == "true"
+
+}
+
+func postToLocalWebInterface(rmDocPath string, rmdocbuff *bytes.Buffer, filepath string) {
+
+	defer func(fpt string) {
+		go deleteFile(fpt)
+		runtime.GC()
+	}(filepath)
+
+	url := "http://10.11.99.1"
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+
+	part, err := writer.CreateFormFile("file", fp.Base(rmDocPath))
+	if err != nil {
+		fmt.Println("Error creating the form file field:", err)
+		return
+	}
+
+	part.Write(rmdocbuff.Bytes())
+
+	err = writer.Close()
+	if err != nil {
+		fmt.Println("Error closing the writer:", err)
+		return
+	}
+
+	req, err := http.NewRequest("POST", url+"/upload", &requestBody)
+	if err != nil {
+		fmt.Println("Error creating the request:", err)
+		return
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	resp, err := httpClient.Do(req) // Usa el cliente HTTP reutilizable
+	if err != nil {
+		fmt.Println("Error sending the request:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+}
+
+func singleConversionMode(filepath string) {
 	rmData := rp.LaplacianEdgeDetection(filepath)
 	rmFile := rp.GetFileNameWithoutExtension(filepath)
-	rmDocBuff, rmDocPath := rp.CreateRmDoc(rmFile, rmData)
+	var multiData [][]byte
+	multiData = append(multiData, rmData)
+	rmDocBuff, rmDocPath := rp.CreateRmDoc(rmFile, multiData)
 	if rmDocBuff == nil {
 		fmt.Println("Error al crear zip en memoria:")
 		return
 	}
 
-	go func(rmDocPath string, rmdocbuff *bytes.Buffer) {
-		defer deleteFile(filepath)
-		defer runtime.GC()
+	go postToLocalWebInterface(rmDocPath, rmDocBuff, filepath)
 
-		url := "http://10.11.99.1"
-		var requestBody bytes.Buffer
-		writer := multipart.NewWriter(&requestBody)
-
-		part, err := writer.CreateFormFile("file", fp.Base(rmDocPath))
-		if err != nil {
-			fmt.Println("Error creating the form file field:", err)
-			return
-		}
-
-		part.Write(rmdocbuff.Bytes())
-
-		err = writer.Close()
-		if err != nil {
-			fmt.Println("Error closing the writer:", err)
-			return
-		}
-
-		req, err := http.NewRequest("POST", url+"/upload", &requestBody)
-		if err != nil {
-			fmt.Println("Error creating the request:", err)
-			return
-		}
-		req.Header.Set("Content-Type", writer.FormDataContentType())
-
-		resp, err := httpClient.Do(req) // Usa el cliente HTTP reutilizable
-		if err != nil {
-			fmt.Println("Error sending the request:", err)
-			return
-		}
-		defer resp.Body.Close()
-
-	}(rmDocPath, rmDocBuff)
+	multiData = nil
 }
 
 func watchForScreenshots(dirToSearch, filePrefix string) {
@@ -109,15 +158,13 @@ func watchForScreenshots(dirToSearch, filePrefix string) {
 			if !ok {
 				return
 			}
-			if event.Has(fsnotify.Chmod) || event.Has(fsnotify.Create) {
-				fmt.Println(event.Name)
-			}
+
 			if isNewFile(event) && doesItContainPrefix(event) {
 				//DO NOT REMOVE: The remarkable takes 1200ms to save the png to /home/root
-				//Wasted hours for trying to fix this: 15
-				time.Sleep(1100 * time.Millisecond)
+				//Wasted hours for trying to fix this: 25
+				time.Sleep(1200 * time.Millisecond)
 				rp.DebugPrint("Screenshot found: " + event.Name)
-				go postRmDocToWebInterface(event.Name)
+				singleConversionMode(event.Name)
 			}
 
 		case err, ok := <-watcher.Errors:
@@ -141,7 +188,6 @@ func AppStart() {
 	}
 
 	fmt.Println("<--- Looking for new Screenshots --->")
-	//go watchForScreenshots("/home/root/.local/share/remarkable/xochitl", config.FilePrefix)
 	watchForScreenshots(config.DirToSearch, config.FilePrefix)
 
 }

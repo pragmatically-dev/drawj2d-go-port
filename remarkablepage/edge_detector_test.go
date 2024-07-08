@@ -10,7 +10,7 @@ func TestBooleanMatrixBuilding(t *testing.T) {
 	imgpath := "/home/nieva/Proyectos/PoC-drawj2d-port-go/images/Screenshot.png"
 
 	rmRawData := LaplacianEdgeDetection(imgpath)
-	zipData, zipName := CreateRmDoc("/home/nieva/Proyectos/PoC-drawj2d-port-go/TestBooleanMatrix", rmRawData)
+	zipData, zipName := CreateRmDoc("/home/nieva/Proyectos/PoC-drawj2d-port-go/TestBooleanMatrix", [][]byte{rmRawData})
 
 	file, _ := os.Create(zipName)
 	zipData.WriteTo(file)

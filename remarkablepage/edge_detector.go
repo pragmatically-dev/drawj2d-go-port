@@ -20,7 +20,7 @@ func GetFileNameWithoutExtension(filePath string) string {
 	return strings.TrimSuffix(base, ext)
 }
 
-// DetectWhitePixels detects white pixels in a grayscale image and adds them to a reMarkable page
+// DrawLines detects white pixels in a grayscale image and adds them to a reMarkable page
 func DrawLines(lines LineList, width, height float32) []byte {
 
 	page := NewReMarkablePage()
@@ -44,7 +44,6 @@ func DrawLines(lines LineList, width, height float32) []byte {
 			ln.AddPoint(p1, p2)
 
 		}
-
 	}
 
 	return page.Export()
